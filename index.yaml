@@ -1,0 +1,19 @@
+apiVersion: v1
+entries:
+  rqlite:
+  - apiVersion: v2
+    appVersion: 8.13.2
+    created: "2023-12-22T03:29:40.823261589Z"
+    description: The lightweight, distributed relational database built on SQLite
+    digest: 731537b9c297dc86e27b6b0be52e0398f62d65685f41a2b369b33b1475b503e0
+    home: https://rqlite.io/
+    maintainers:
+    - name: jtackaberry
+    name: rqlite
+    sources:
+    - https://github.com/rqlite/rqlite
+    type: application
+    urls:
+    - https://github.com/rqlite/helm-charts/releases/download/rqlite-0.1.0/rqlite-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-12-22T03:29:40.823272059Z"
