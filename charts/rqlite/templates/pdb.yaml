@@ -1,0 +1,18 @@
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "rqlite.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "rqlite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: voter
+
+  {{- if .Values.podDisruptionBudget }}
+  {{- tpl (toYaml .Values.podDisruptionBudget) $ | nindent 2 }}
+  {{- else }}
+  maxUnavailable: {{ max 1 (sub .Values.replicaCount (add (div .Values.replicaCount 2) 1)) }}
+  {{- end }}

@@ -1,0 +1,225 @@
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+{{- include "rqlite.generateSecrets" . -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "rqlite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: voter
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # rqlite is tolerant of all nodes coming up simultaneously, so we set the pod management
+  # policy to parallel to allow fast scaling.
+  podManagementPolicy: Parallel
+  updateStrategy:
+    {{- tpl (toYaml .Values.updateStrategy) $ | nindent 4 }}
+  selector:
+    matchLabels:
+      {{- include "rqlite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: voter
+  serviceName: {{ $name }}-headless
+  template:
+    metadata:
+      labels:
+        {{- include "rqlite.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: voter
+        {{- with .Values.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      # rqlite doesn't require the K8s API
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+
+      volumes:
+        - name: secrets
+          secret:
+            secretName: {{ $name }}
+            defaultMode: 288 # 0400
+        - name: extra
+          secret:
+            secretName: {{ $name }}-extra
+            defaultMode: 288 # 0400
+      {{- if .Values.config.tls.node.secretName }}
+        - name: node-tls
+          secret:
+            secretName: {{ .Values.config.tls.node.secretName }}
+            defaultMode: 288 # 0400
+      {{- end }}
+      {{- if .Values.config.tls.client.secretName }}
+        - name: client-tls
+          secret:
+            secretName: {{ .Values.config.tls.client.secretName }}
+            defaultMode: 288 # 0400
+      {{- end }}
+      {{- if not .Values.persistence.enabled }}
+        - name: storage
+          emptyDir: {}
+      {{- end }}
+      containers:
+        - name: rqlite
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+          {{- with .Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          args:
+            {{- if .Values.config.users }}
+            - -auth=/config/sensitive/users.json
+            - -join-as=_system_rqlite
+            {{- end }}
+
+            {{- if .Values.config.tls.node.enabled }}
+            {{- $basefile := empty .Values.config.tls.node.secretName | ternary "/config/sensitive/node" "/config/node-tls/tls" }}
+            - -node-cert={{ $basefile }}.crt
+            - -node-key={{ $basefile }}.key
+            {{- if .Values.config.tls.node.verifyServerName }}
+            - -node-verify-server-name={{ .Values.config.tls.node.verifyServerName }}
+            {{- else if kindIs "invalid" .Values.config.tls.node.verifyServerName }}
+              {{- fail "config.tls.node.verifyServerName must be defined when config.tls.node.enabled is true" }}
+            {{- end }}
+            {{- if .Values.config.tls.node.ca }}
+            - -node-ca-cert=/config/sensitive/node-ca.crt
+            {{- end }}
+            {{- if .Values.config.tls.node.mutual }}
+            - -node-verify-client
+            {{- end }}
+            {{- if .Values.config.tls.node.insecureSkipVerify }}
+            - -node-no-verify
+            {{- end }}
+            {{- end }}
+
+            {{- if .Values.config.tls.client.enabled }}
+            {{- $basefile := empty .Values.config.tls.client.secretName | ternary "/config/sensitive/client" "/config/client-tls/tls" }}
+            - -http-cert={{ $basefile }}.crt
+            - -http-key={{ $basefile }}.key
+            {{- if .Values.config.tls.client.ca }}
+            - -http-ca-cert=/config/sensitive/client-ca.crt
+            {{- end }}
+            {{- if .Values.config.tls.client.mutual }}
+            # Disabled for now. https://github.com/rqlite/rqlite/issues/1508
+            # - -http-verify-client
+            {{- end }}
+            {{- end }}
+            - -disco-mode=dns-srv
+            - -disco-config={"name":"rqlite-headless","service":"raft"}
+            - -bootstrap-expect={{ .Values.replicaCount }}
+            - -join-interval=1s
+            - -join-attempts=120
+            - -raft-shutdown-stepdown
+            {{- with .Values.extraArgs }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: 4001
+              name: http
+            - containerPort: 4002
+              name: raft
+          env:
+            - name: DATA_DIR
+              value: "/rqlite"
+            {{- with .Values.extraEnv }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+
+          {{- with .Values.readinessProbe }}
+          readinessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 -}}
+          {{- end }}
+
+          {{- with .Values.startupProbe }}
+          startupProbe:
+            {{- tpl (toYaml .) $ | nindent 12 -}}
+          {{- end }}
+
+          {{- with .Values.livenessProbe }}
+          livenessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 -}}
+          {{- end }}
+
+          lifecycle:
+            # Sleep to hold off SIGTERM until after K8s endpoint list has had a chance to
+            # reflect removal of this pod, otherwise traffic could continue to be directed
+            # to the pod's IP after we have terminated. This is a fairly narrow race
+            # condition with K8s so a couple seconds is enough to avoid it.
+            preStop:
+              exec:
+                command:
+                  - sleep
+                  - "2"
+          volumeMounts:
+            - name: storage
+              mountPath: /rqlite
+            - name: secrets
+              mountPath: /config/sensitive
+            - name: extra
+              mountPath: /config/extra
+            {{- if .Values.config.tls.node.secretName }}
+            - name: node-tls
+              mountPath: /config/node-tls
+            {{- end }}
+            {{- if .Values.config.tls.client.secretName }}
+            - name: client-tls
+              mountPath: /config/client-tls
+            {{- end }}
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: storage
+      spec:
+        {{- with .Values.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        {{- with .Values.persistence.accessModes }}
+        accessModes:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}

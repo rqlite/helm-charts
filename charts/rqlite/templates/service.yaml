@@ -1,0 +1,76 @@
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+{{- $clientPort := .Values.service.port | default (.Values.config.tls.client.enabled | ternary 443 80) }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ $name }}-headless
+  labels:
+    {{- include "rqlite.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: True
+
+  {{ if .Values.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ .Values.service.ipFamilyPolicy }}
+  {{- end }}
+  {{- with .Values.service.ipFamilies }}
+  ipFamilies:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  selector:
+    {{- include "rqlite.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: voter
+  ports:
+    - name: http 
+      protocol: TCP
+      port: {{ $clientPort }}
+      targetPort: http
+    - name: raft
+      protocol: TCP
+      port: 4002
+      targetPort: raft
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "rqlite.labels" . | nindent 4 }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  {{- with .Values.service.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+
+  {{ if .Values.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ .Values.service.ipFamilyPolicy }}
+  {{- end }}
+  {{- with .Values.service.ipFamilies }}
+  ipFamilies:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+
+  selector:
+    {{- include "rqlite.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: voter
+  ports:
+    - name: http
+      appProtocol: {{ .Values.config.tls.client.enabled | ternary "https" "http" }}
+      protocol: TCP
+      port: {{ $clientPort }}
+      targetPort: http
+      {{- if ne .Values.service.type "ClusterIP" }}
+      {{- with .Values.service.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+      {{- end }}

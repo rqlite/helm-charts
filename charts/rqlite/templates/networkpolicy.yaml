@@ -1,0 +1,24 @@
+{{- if .Values.networkPolicy }}
+{{- if .Values.networkPolicy.enabled }}
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $name }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "rqlite.selectorLabels" . | nindent 6 }}
+  ingress:
+    # Client-facing port, allow from all
+    - ports:
+       - port: 4001
+    # Raft port for internode communication, only allow from other rqlite pods
+    - ports:
+       - port: 4002
+      from:
+        - podSelector:
+            matchLabels:
+              {{- include "rqlite.selectorLabels" . | nindent 14 }}
+{{- end }}
+{{- end }}
