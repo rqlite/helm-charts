@@ -142,9 +142,9 @@ topologySpreadConstraints: []
   #       app.kubernetes.io/instance: '{{ .Release.Name }}'
 
 
-# If pod disruption is undefined, it defaults to N - (N/2 + 1), but always tolerates at
-# least 1 node down for the single replica case (where downtime is implied to be
-# acceptable).
+# If pod disruption is empty (as is default below), it will use a max unavailable value of
+# N - (N/2 + 1), but always tolerates at least 1 node down for the single replica case
+# (where downtime is implied to be acceptable).
 #
 # https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
 #
@@ -170,7 +170,7 @@ podAnnotations: {}
 extraArgs:
   - -fk=true
 
-# Additional environment variables added to each rqlite pod
+# Additional environment variables added to each rqlite pod.
 #
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
 extraEnv: []
@@ -233,7 +233,7 @@ startupProbe: {}
 
 # Liveness probe used by K8s to decide if a pod should be forcefully restarted.
 #
-# Be vary cautious about enabling this. Liveness probes are a notorious footgun.
+# Be very cautious about enabling this. Liveness probes are a notorious footgun.
 #
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
 livenessProbe: {}
@@ -257,11 +257,11 @@ service:
   annotations: {}
 
 
-# An optional Kubernetes Ingress for the rqlite client API
+# An optional Kubernetes Ingress for the rqlite client API.
 #
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
 ingress:
-  # If true, the Ingress resource will be create
+  # If true, the Ingress resource will be created
   enabled: false
   # If null, the default ingress class is used
   ingressClassName: null
@@ -276,12 +276,10 @@ ingress:
   path: /
   # If using path rewriting with custom ingress annotations, set to ImplementationSpecific 
   pathType: Prefix
-
   # Custom annotations for the Ingress resource
   annotations: {}
   # Additional custom labels for the Ingress
   extraLabels: {}
-
   # If using a TLS certificate that isn't the ingress proxy's default, this references a
   # Kubernetes Secret that contains the certifiicate, which must be manually created in
   # the same namespace as rqlite. (Automatic certificate generation via cert-manager
@@ -289,7 +287,7 @@ ingress:
   tls: []
   #   - secretName: rqlite-server-tls
   #     hosts:
-  #       - rqlite.domain.com
+  #       - rqlite.example.com
 
 
 # TODO: not yet implemented
@@ -312,7 +310,7 @@ config:
     # https://rqlite.io/docs/guides/security/#node-to-node-encryption
     #
     # Tip: for certificates/keys offered as chart values, use YAML's block scalar '|'
-    # indicatorto hold multi-line strings. For example:
+    # indicator to hold multi-line strings. For example:
     #     cert: |
     #       -----END CERTIFICATE-----
     #       [...]
@@ -334,8 +332,8 @@ config:
       # or the chart will error.
       #
       # This is because rqlite nodes in the cluster are discovered via DNS, and
-      # connections are then established to the pod IPs, but pod IPs are unpredictable (at
-      # least without the help of constructs like Calico IP Pools). This setting allows
+      # connections are then established to the pod IPs, but pod IPs are unpredictable
+      # (unless you leverage special constructs like Calico IP Pools). This setting allows
       # provisioning the certificate with a well-known SAN which can be verified.
       # 
       # If for some reason you want to disable this and force chart deployment anyway,
@@ -350,11 +348,12 @@ config:
       # Disable all certificate verification for inter-node connections. This is
       # obviously discouraged but it can be useful for testing.
       insecureSkipVerify: false
-      # Server certificate in PEM format. This is ignored if secretName is defined.
+      # Server certificate in PEM format. Include all intermediate CA certificates here,
+      # if applicable. This is ignored if secretName is defined.
       cert: ""
-      # Server private key in PEM format. This is ignored if secretName is defined
+      # Server private key in PEM format. This is ignored if secretName is defined.
       key: ""
-      # Optional root CA certificate used to validate certificates presented by other
+      # Optional root CA certificate(s) used to validate certificates presented by other
       # nodes. If not defined, the system's default trust store will be used. Mandatory if
       # using a non-public CA.
       ca: ""
@@ -366,16 +365,17 @@ config:
       # If true, the Kubernetes Service will present an HTTPS interface on port 443
       # (or service.port if you explicitly set it above).
       enabled: false
-      # As with config.tls.node.secretName, but only affecting the client-facing port
+      # As with config.tls.node.secretName, but only affecting the client-facing port.
       secretName: null
       # If true, the client will be required to present a TLS client certificate.
       # The required root CA for the client's cert can be defined in "ca" below.
       #
       # XXX: currently ignored due to https://github.com/rqlite/rqlite/issues/1508
       mutual: false
-      # Server certificate in PEM format. This is ignored if secretName is defined.
+      # Server certificate in PEM format. Include all intermediate CA certificates here,
+      # if applicable. This is ignored if secretName is defined.
       cert: ""
-      # Server private key in PEM format. This is ignored if secretName is defined
+      # Server private key in PEM format. This is ignored if secretName is defined.
       key: ""
       # Optional root CA certificate used to validate certificates presented by clients
       # when mutual TLS is in use. If not defined, the system's default trust store will
@@ -389,12 +389,13 @@ config:
   #
   # https://rqlite.io/docs/guides/security/#configuring-usernames-and-passwords
   #
-  # Two additional internal systems users will be automatically created with randomly
-  # generated passwords: one used for Kubernetes health probes, and one for rqlite itself
-  # used for internode-communication.
+  # Two additional internal systems users will be automatically created by the chart with
+  # randomly generated passwords: one used for Kubernetes health probes, and one for
+  # rqlite itself used for internode-communication.
   #
   # By default the users list is empty, which means no authentication is enabled on
-  # rqlite. Beware that anyone who can reach it over the network has full privileges.
+  # rqlite. Beware that in this case anyone who can reach it over the network has full
+  # privileges.
   #
   # rqlite does not currently support dynamically reloading of this file when it changes
   # on disk, so you will need to do a rolling restart after updating.

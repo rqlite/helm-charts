@@ -58,10 +58,10 @@ values.
 
 The default chart values will deploy a complete unsecured rqlite cluster, which is geared
 toward low-friction testing. But it means that anyone with network access to the K8s
-Service or pods have free rein over the rqlite database.
+Service or pods has free rein over the rqlite database.
 
 A proper production deployment should define:
- * At least 3 replicas (`replicaCount`)
+ * At least 3 replicas (`replicaCount`) for high availability
  * Password-based authentication and user permissions (`config.users`)
  * Client-facing TLS either by means of a TLS-terminating Ingress (`ingress.enabled`) or
    by configuring rqlite's native TLS support (`config.tls.client`)
@@ -70,7 +70,7 @@ A proper production deployment should define:
  * Properly tuned requests and limits for your workload (`requests`)
 
 It's also recommended you either pin to a specific Helm chart version (by passing
-`--version` to helm) or at least to a specific rqlite version (`image.tag`), particularly
+`--version` to `helm`) or at least to a specific rqlite version (`image.tag`), particularly
 if using deployment pipelines, so that you have explicit control over when the software is
 upgraded in your environment.
 
