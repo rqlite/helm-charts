@@ -56,12 +56,13 @@ values.
 
 ## Production Deployments
 
-The default chart values will deploy a complete unsecured rqlite cluster, which is geared
-toward low-friction testing. But it means that anyone with network access to the K8s
-Service or pods has free rein over the rqlite database.
+The default chart values will deploy an unsecured single-node rqlite instace geared toward
+low-friction testing, but it means that anyone with network access to the K8s Service or
+pods has free rein over the rqlite database.
 
-A proper production deployment should define:
- * At least 3 replicas (`replicaCount`) for high availability
+This may not be suitable for production deployments in your environment.  It's recommended
+you consider the following reliability and security related configuration:
+ * The number of replicas (`replicaCount`), which requires at least 3 for high availability
  * Password-based authentication and user permissions (`config.users`)
  * Client-facing TLS either by means of a TLS-terminating Ingress (`ingress.enabled`) or
    by configuring rqlite's native TLS support (`config.tls.client`)
