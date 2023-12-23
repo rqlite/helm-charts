@@ -6,6 +6,8 @@ description: The lightweight, distributed relational database built on SQLite
 type: application
 home: https://rqlite.io/
 sources:
+  - https://github.com/rqlite/
   - https://github.com/rqlite/rqlite
+  - https://github.com/rqlite/helm-charts
 maintainers:
   - name: jtackaberry
