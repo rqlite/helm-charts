@@ -257,7 +257,7 @@ service:
   annotations: {}
 
 
-# An optional Kubernetes Ingress for the rqlite client API.
+# An optional Kubernetes Ingress for the rqlite client HTTP(S) API.
 #
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
 ingress:

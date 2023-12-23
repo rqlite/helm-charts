@@ -10,7 +10,8 @@ spec:
     matchLabels:
       {{- include "rqlite.selectorLabels" . | nindent 6 }}
   ingress:
-    # Client-facing port, allow from all
+    # Allow all traffic to the client-facing port which runs HTTP (or HTTPS if
+    # config.tls.client.enabled is true)
     - ports:
        - port: 4001
     # Raft port for internode communication, only allow from other rqlite pods
