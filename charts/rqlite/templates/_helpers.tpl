@@ -61,7 +61,7 @@ Finally, to ensure consistency across upgrades, the generated values are persist
 K8s Secret (rendered in secrets.yaml)
 */}}
 {{- define "rqlite.generateSecrets" -}}
-  {{- if not (index .Release "secrets") -}}
+  {{- if not (index .Release "rqlite") -}}
     {{- $name := tpl (include "rqlite.fullname" .) $ -}}
     {{- $obj := (lookup "v1" "Secret" .Release.Namespace (printf "%s-internal" $name)) | default dict }}
     {{- $secrets := (get $obj "data") | default dict }}
