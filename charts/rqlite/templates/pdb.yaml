@@ -1,18 +1,8 @@
-{{- $name := tpl (include "rqlite.fullname" .) $ -}}
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: {{ $name }}
-  labels:
-    {{- include "rqlite.labels" . | nindent 4 }}
-spec:
-  selector:
-    matchLabels:
-      {{- include "rqlite.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: voter
+{{/* PDB for voter nodes */}}
+{{- include "rqlite.renderPDB" (dict "type" "voter" "ctx" $) -}}
 
-  {{- if .Values.podDisruptionBudget }}
-  {{- tpl (toYaml .Values.podDisruptionBudget) $ | nindent 2 }}
-  {{- else }}
-  maxUnavailable: {{ max 1 (sub .Values.replicaCount (add (div .Values.replicaCount 2) 1)) }}
-  {{- end }}
+{{/* PDB for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+---
+{{- include "rqlite.renderPDB" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}

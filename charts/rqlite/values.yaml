@@ -1,5 +1,3 @@
-# TODO: automated backups, readonly nodes
-#
 # Overrides for the chart name and its computed full name.
 #
 # In most cases these can be left as null.
@@ -309,8 +307,35 @@ ingress:
   #       - rqlite.example.com
 
 
-# TODO: not yet implemented
-readonly: {}
+# rqlite supports a separate pool of read-only replicas, which can service read queries
+# with a read-consistency of none. See https://rqlite.io/docs/clustering/read-only-nodes/
+#
+# When a read-only node receives a request with any consistency level *other* than none,
+# it will forward the request to the cluster's current leader node. So be careful,
+# because failing to set a read-consistency of none will rather defeat the purpose of a
+# dedicated read-only node pool. (Note that the default consistency level is "weak" so
+# this does need to be explicitly set.)
+#
+# See also https://rqlite.io/docs/api/read-consistency/
+#
+# When readonly.replicaCount below is set to a value greater than 0, the Kubernetes
+# resources for the read-only pool will be created, which includes a dedicated K8s
+# Service. You can also create an Ingress for the read-only pool.
+#
+# Any top-level key documented above that's documented as applying by read-only nodes can
+# be defined/overridden in this section.
+#
+# Dict values above are NOT MERGED with the values here: anything defined here --
+# including null! -- fully *overrides* the top-level keys above. So, for example, if you
+# defined podAnnotations above and want to augment read-only pods with one additional
+# annotation, you'll need to fully redefine all the same podAnnotations here too, because
+# the chart won't merge them.
+readonly:
+  # Set a value greater than zero to enable read-only nodes. A separate K8s Service
+  # (suffixed with "readonly") is created to serve as an endpoint for read-only queries.
+  replicaCount: 0
+  # All other keys will fully override the voter node configuration above when they are
+  # defined (even as null) here.
 
 
 # The config section offers more convenient abstractions for aspects of rqlite

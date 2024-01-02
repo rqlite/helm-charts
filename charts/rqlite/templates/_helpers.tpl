@@ -85,10 +85,10 @@ K8s Secret (rendered in secrets.yaml)
 Renders TLS certificates as defined in either config.tls.node or config.tls.client.  The
 subsection name ("node" or "client") is held the value key of the passed dict.
 
-Usage: include "rqlite.renderTLSFiles" (dict "value" "node|client" "context" $)
+Usage: include "rqlite.renderTLSFiles" (dict "value" "node|client" "ctx" $)
 */}}
 {{- define "rqlite.renderTLSFiles" -}}
-  {{- $section := get .context.Values.config.tls .value -}}
+  {{- $section := get .ctx.Values.config.tls .value -}}
   {{- $files := dict }}
   {{- if and $section.enabled (empty $section.secretName) -}}
     {{- if or (empty $section.cert) (empty $section.key) }}

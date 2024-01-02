@@ -1,45 +1,12 @@
+{{/* Ingress for voter nodes */}}
 {{- if .Values.ingress.enabled }}
-{{- $name := tpl (include "rqlite.fullname" .) $ -}}
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ $name }}
-  {{- with .Values.ingress.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  labels:
-    {{- include "rqlite.labels" . | nindent 4 }}
-    {{- with .Values.ingress.extraLabels }}
-      {{ toYaml . | nindent 4 }}
-    {{- end }}
-spec:
-{{- if .Values.ingress.tls }}
-  tls:
-  {{- range .Values.ingress.tls }}
-    - hosts:
-      {{- range .hosts }}
-        - {{ . | quote }}
-      {{- end }}
-      secretName: {{ .secretName }}
-  {{- end }}
+{{- include "rqlite.renderIngress" (dict "type" "voter" "ctx" $) -}}
 {{- end }}
-{{/* We loop over hosts so ensure we have at least one, even if it's a dummy value */}}
-{{- $hosts := coalesce .Values.ingress.hosts (list "") }}
-  rules:
-    {{- range $hosts }}
-    - http:
-        paths:
-          - path: {{ $.Values.ingress.path }}
-            pathType: {{ $.Values.ingress.pathType }}
-            backend:
-              service:
-                name: {{ $name }}
-                port:
-                  name: http
 
-      {{- if . }}
-      host: {{ . }}
-      {{- end }}
-    {{- end }}
+{{/* Ingress for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+{{- if dig "readonly" "ingress" "enabled" false .Values.AsMap }}
+---
+{{- include "rqlite.renderIngress" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}
 {{- end }}

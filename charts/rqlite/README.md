@@ -76,6 +76,29 @@ if using deployment pipelines, so that you have explicit control over when the s
 upgraded in your environment.
 
 
+## Read-only Nodes
+
+The chart supports deploying a separate resources for [readonly
+nodes](https://rqlite.io/docs/clustering/read-only-nodes/), where:
+
+* `readonly.replicaCount` specifies the number of read-only nodes for the rqlite cluster
+* read-only nodes are given their own dedicated Kubernetes Service (and Ingress, if
+  enabled under `readonly.ingress`)
+    * remember to [use a read-consistency level of
+      `none`](https://rqlite.io/docs/clustering/read-only-nodes/#querying-a-read-only-node)
+      when querying the read-only endpoint, otherwise your queries will simply be
+      forwarded to the cluster's current leader node, defeating the purpose of a dedicated
+      read-only pool
+* by default, readonly nodes inherit most of the same chart configuration values that
+  voting nodes use, but most configuration can be overriden specifically for readonly
+  nodes by specifying keys normally at the top-level within the `readonly` map
+    * all configuration that can be overriden within `readonly` is so indicated in
+      [`values.yaml`](values.yaml)
+* unlike voting nodes, read-only nodes will automatically leave cluster when the pod
+  gracefully terminates, making it possible to use Horizontal Pod Autoscaling for
+  demand-based scaling for readonly workloads
+
+
 ## Secrets
 
 The chart receives a number of configurable values that are sensitive, such as user
