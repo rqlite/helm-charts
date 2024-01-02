@@ -52,7 +52,8 @@ spec:
       port: {{ $clientPort }}
       targetPort: http
       {{- if ne $serviceType "ClusterIP" }}
-      {{- with dig "service" "nodePort" $.Values.service.nodePort $values }}
+      {{- /* This is an exception to the "inherits from voter configuration" rule: node ports must be unique. */}}
+      {{- with dig "service" "nodePort" 0 $values }}
       nodePort: {{ . }}
       {{- end }}
       {{- end }}

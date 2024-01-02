@@ -261,6 +261,10 @@ service:
   ipFamilies: []
   # Leave null to automatically generate a ClusterIP
   clusterIP: null
+  # If type is NodePort or LoadBalancer, this may be defined to set an explicit node port.
+  # Note that this particular field is not inherited by the read-pool (if enabled) because
+  # uniqueness is required.
+  nodePort: null
   # Service port defaults to port 80 when config.tls.http.enabled is false, or 443
   # otherwise. But you can override the default choice here.
   port: null
