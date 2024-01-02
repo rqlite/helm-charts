@@ -74,6 +74,14 @@ resources:
 updateStrategy:
   type: RollingUpdate
 
+# rqlited is given this amount of time to gracefully shutdown before SIGKILL occurs.
+#
+# You may need to increase this for large data sets or slow storage, because SQLite
+# checkpoints the WAL to its database file on shutdown. The Kubelet issuing SIGKILL
+# during this process would be undesirable.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+terminationGracePeriodSeconds: 15
 
 # The pod-level security context. 
 #
