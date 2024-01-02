@@ -95,6 +95,7 @@ podSecurityContext:
   runAsUser: 10050
   runAsGroup: 10050
   fsGroup: 10050
+  fsGroupChangePolicy: OnRootMismatch
 
 # The container-level security context. Custom Linux capabilities, Seccomp profiles,
 # SELinux labels, etc. may be defined here.
