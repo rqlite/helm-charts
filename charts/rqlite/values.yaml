@@ -7,7 +7,8 @@ nameOverride: null
 fullnameOverride: null
 
 
-# Container image details for all nodes in the rqlite cluster
+# Container image details for all nodes in the rqlite cluster. Applies to both voter
+# nodes and read-only nodes (if enabled below).
 image:
   repository: docker.io/rqlite/rqlite
   # Overrides the image tag whose default is the chart appVersion
@@ -44,6 +45,9 @@ replicaCount: 1
 #
 # This will only take effect if the Kubernetes cluster has a CNI plugin that implements
 # NetworkPolicy (such as Calico).
+#
+# You will want to disable this if you require connectivity to the raft port from
+# outside the cluster.
 networkPolicy:
   enabled: true
 
@@ -142,8 +146,9 @@ topologySpreadConstraints: []
   #       app.kubernetes.io/instance: '{{ .Release.Name }}'
 
 
-# If pod disruption is empty (as is default below), it will use a max unavailable value of
-# N - (N/2 + 1), but always tolerates at least 1 node down for the single replica case
+# If pod disruption is empty (as is default below), it will ensure quorum can always be
+# met by using replicaCount (above) and allowing a maximum of N - (N/2 + 1) pods being
+# unavailable, but always tolerates at least 1 node down for the single replica case
 # (where downtime is implied to be acceptable).
 #
 # https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
@@ -259,7 +264,8 @@ service:
 
 # An optional Kubernetes Ingress for the rqlite client HTTP(S) API.
 #
-# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+# This value is *not* inherited by read-only nodes, but can be defined separately (see
+# "readonly" below).
 ingress:
   # If true, the Ingress resource will be created
   enabled: false
@@ -276,7 +282,11 @@ ingress:
   path: /
   # If using path rewriting with custom ingress annotations, set to ImplementationSpecific 
   pathType: Prefix
-  # Custom annotations for the Ingress resource
+  # Custom annotations for the Ingress resource. Note that if config.client.tls.enabled is
+  # true, you will need to add the appropriate annotation for your ingress to have it
+  # connect to the backend over HTTPS. (As a convenience, the chart takes care of this
+  # for ingress-nginx natively, but if you use a different ingress controller, you'll need
+  # to set this yourself.)
   annotations: {}
   # Additional custom labels for the Ingress
   extraLabels: {}
