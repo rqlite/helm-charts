@@ -7,14 +7,14 @@ pre-generated static list of peers used by the useStaticPeers chart option.
 {{- range $i, $_ := until (.Values.replicaCount | int )}}
 {{- $peers = append $peers (dict
         "id" (printf "rqlite-%d" $i)
-        "address" (printf "%s-%d.%s.svc.cluster.local:4001" $name $i $.Release.Namespace)
+        "address" (printf "%s-%d.%s-headless.%s.svc.cluster.local:4002" $name $i $name $.Release.Namespace)
         "non_voter" false
     ) }}
 {{- end }}
 {{- range $i, $_ := until (dig "readonly" "replicaCount" 0 .Values.AsMap | int )}}
 {{- $peers = append $peers (dict
         "id" (printf "rqlite-readonly-%d" $i)
-        "address" (printf "%s-readonly-%d.%s.svc.cluster.local:4001" $name $i $.Release.Namespace)
+        "address" (printf "%s-readonly-%d.%s-headless-readonly.%s.svc.cluster.local:4002" $name $i $name $.Release.Namespace)
         "non_voter" true
     ) }}
 {{- end }}
