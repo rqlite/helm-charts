@@ -40,6 +40,16 @@ image:
 replicaCount: 1
 
 
+# Use a statically generated peers list instead of DNS-based discovery.
+#
+# This should only be used to recover a broken cluster that has lost quorum and can't
+# start up properly by restoring the missing nodes. This could happen because, for
+# example, you have lost the underlying block storage for the original nodes.
+#
+# See "Recovering From Permanent Loss of Quorum" in the chart's README for more
+# information on how to use this setting as part of a recovery procedure.
+useStaticPeers: false
+
 # When enabled, a NetworkPolicy is created that restricts the inter-node raft port to
 # only be accessible to other rqlite nodes in the cluster.
 #

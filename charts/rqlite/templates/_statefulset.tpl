@@ -92,6 +92,9 @@ spec:
           secret:
             secretName: {{ $name }}-extra
             defaultMode: 288 # 0400
+        - name: config-peers
+          configMap:
+            name: {{ $name }}-peers
       {{- if $config.tls.node.secretName }}
         - name: node-tls
           secret:
@@ -116,7 +119,24 @@ spec:
           imagePullPolicy: {{ . }}
           {{- end }}
           {{- end }}
+          # Override the default docker entrypoint script so we can add our own
+          # custom startup logic ahead of rqlited. Afterward we exec the original
+          # entrypoint script with all the required arguments.
+          command: ["/bin/sh", "-c"]
           args:
+            - |-
+              # If we're using static peers, copy the chart-generated peers file into
+              # place. But first remove any existing peers file, which we do regardless as
+              # in normal operation we use DNS discovery.
+              rm -f /rqlite/raft/peers.info
+              if [ "`cat /config/peers/enable`" = "true" ]; then
+                echo "WARNING: Using generated static peers. This is a recovery procedure and must be reverted after service is restored."
+                cat /config/peers/peers.json
+                cp /config/peers/peers.json /rqlite/raft
+              fi
+              exec /bin/docker-entrypoint.sh "$@"
+            # All arguments after this point are passed through to docker-entrypoint.sh
+            # by the init script above.
             {{- if $config.users }}
             - -auth=/config/sensitive/users.json
             - -join-as=_system_rqlite
@@ -220,6 +240,8 @@ spec:
               mountPath: /config/sensitive
             - name: extra
               mountPath: /config/extra
+            - name: config-peers
+              mountPath: /config/peers
             {{- if $config.tls.node.secretName }}
             - name: node-tls
               mountPath: /config/node-tls

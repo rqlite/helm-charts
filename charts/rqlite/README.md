@@ -117,6 +117,109 @@ Sops-encrypted.  Then the chart can be deployed as:
 helm upgrade -i -n db --create-namespace rqlite rqlite/rqlite -f values.yaml -f secrets://secrets.yaml
 ```
 
+## Cluster Scaling and Recovery
+
+Nodes come in two flavors: voting and read-only (non-voting).
+
+### Scaling Voting Nodes
+
+The chart value `replicaCount` dictates the number of voting nodes in the cluster. It's
+strongly recommended that voting nodes only be scaled up or down by updating this value
+and redeploying the chart (via `helm upgrade`), because the replica count is used in
+several places (such as the PodDisruptionBudget).
+
+Scaling voting nodes up can be done simply by increasing `replicaCount` and running `helm
+upgrade`.  The new nodes will mount a fresh PV, join the cluster, and synchronize the data
+before receiving requests via the K8s Service.
+
+On the other hand, scaling voting nodes *down* should follow rqlite's [documented
+procedure for removing or replacing a
+node](https://rqlite.io/docs/clustering/general-guidelines/#removing-or-replacing-a-node).
+You can't simply decrease `replicaCount` and be done with it, because once voting nodes
+have joined the rqlite cluster, the rest of the nodes in the cluster will be expecting
+them to re-join until they are explicitly removed.
+
+For example, suppose you've deployed the chart with the release name `rqlite` in a
+namespace called `db`, and you have a 5-node cluster and want to shrink to 3 nodes. First
+remove the last two nodes in the cluster:
+
+```bash
+# Connect to the first voting note of the cluster.
+$ kubectl exec -n db rqlite-0 -ti -- /bin/sh
+# You will need to include additional arguments if you've enabled
+# user authentication (-u user:password) or client TLS (-s https).
+~ $ rqlite
+Welcome to the rqlite CLI.
+Enter ".help" for usage hints.
+Connected to https://127.0.0.1:4001 running version v8.14.1
+127.0.0.1:4001> .remove rqlite-4
+127.0.0.1:4001> .remove rqlite-3
+```
+
+Then you can reinstall the chart with the lower replica count:
+
+```bash
+# In practice you'll more likely update your custom values.yaml
+$ helm upgrade -n db rqlite rqlite/rqlite --set replicaCount=3
+```
+
+If you've scaled down *before* removing the nodes, don't worry, as long as you still have
+quorum the deleted pods can still be removed after-the-fact, albeit with a little more
+squawking in the logs.
+
+
+#### Recovering From Permanent Loss of Quorum
+
+If you lost enough nodes to the point where quorum can't be satisfied *and* the PVs for
+those pods were also lost (because otherwise you could simply scale back up to restore
+quorum), you will need to perform [rqlite's quorum recovery
+procedure](https://rqlite.io/docs/clustering/general-guidelines/#recovering-a-cluster-that-has-permanently-lost-quorum).
+
+rqlite's Helm chart provides a mechanism to handle this with the `useStaticPeers` chart
+value. During normal operation, `useStaticPeers` should be `false`, in which case rqlite
+will use DNS provided by Kubernetes for peer discovery.
+
+However, in the event that quorum can't be recovered, you can set `useStaticPeers` to
+`true` temporarily, perform a rolling restart on all nodes in the cluster, and set it back
+to `false`. Changing this value only updates a ConfigMap, so it won't trigger an unwanted
+rollout of the StatefulSet when changing back to `false`.
+
+For example, assume your deployment's usual values are in `values.yaml`, and again
+assuming your release is called `rqlite` in the `db` namespace:
+
+```bash
+# Upgrade the chart with the useStaticPeers recovery setting
+$ helm upgrade -n db rqlite rqlite/rqlite -f values.yaml --set useStaticPeers=true
+# Restart all pods in the rqlite cluster. You can remove the last argument if
+# you don't have readonly pods.
+$ kubectl rollout -n db restart statefulset/rqlite statefulset/rqlite-readonly
+```
+
+At this point, once the pods restart and quiesce, quorum should be restored. As a final
+step, don't forget to revert the `useStaticPeers` setting simply by redeploying the chart
+using your original values without the override:
+
+```bash
+$ helm upgrade -n db rqlite rqlite/rqlite -f values.yaml
+```
+
+This last command won't restart the rqlite pods, only prevent the use of `peers.json` on
+the next restart, which includes if an existing rqlite pod crashes and is restarted by the
+Kubelet.
+
+
+### Scaling Read-only Nodes
+
+Read-only nodes don't participate in quorum, and the Helm chart deploys them such that
+they will automatically leave the cluster on shutdown. This means the read-only
+StatefulSet can be scaled up and down arbitrarily, and can even be driven by the
+Horizontal Pod Autoscaler if you choose.
+
+The chart value `readonly.replicaCount` defines the initial number of read-only replicas,
+and can thereafter be dynamically scaled, either by running `kubectl scale`, using HPA, or
+some other orchestrator.
+
+
 ## Versioning
 
 Helm charts use semantic versioning, and rqlite offers the following guarantees:

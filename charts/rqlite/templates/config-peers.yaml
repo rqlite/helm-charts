@@ -1,0 +1,30 @@
+{{/*
+This ConfigMap contains a pre-generated static list of peers, which used by the
+useStaticPeers chart option.
+*/}}
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+{{- $peers := list }}
+{{- range $i, $_ := until (.Values.replicaCount | int )}}
+{{- $peers = append $peers (dict
+        "id" (printf "rqlite-%d" $i)
+        "address" (printf "%s-%d.%s.svc.cluster.local:4001" $name $i $.Release.Namespace)
+        "non_voter" false
+    ) }}
+{{- end }}
+{{- range $i, $_ := until (dig "readonly" "replicaCount" 0 .Values.AsMap | int )}}
+{{- $peers = append $peers (dict
+        "id" (printf "rqlite-readonly-%d" $i)
+        "address" (printf "%s-readonly-%d.%s.svc.cluster.local:4001" $name $i $.Release.Namespace)
+        "non_voter" true
+    ) }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-peers
+  labels:
+    {{- include "rqlite.labels" . | nindent 4 }}
+data:
+  enable: "{{- .Values.useStaticPeers | default false }}"
+  peers.json: |-
+    {{- $peers | mustToPrettyJson | nindent 4 }}
