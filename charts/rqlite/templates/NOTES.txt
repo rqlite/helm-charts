@@ -1,5 +1,6 @@
 {{/* vi: ft=helm.mustache */}}
 {{- $name := tpl (include "rqlite.fullname" .) $ -}}
+{{- $readonly := dig "readonly" "replicaCount" 0 .Values.AsMap -}}
 {{/* Construct URL for in-cluster access */}}
 {{- $scheme := .Values.config.tls.client.enabled | ternary "https" "http" }}
 {{- $svcurl := printf "%s://%s.%s.svc.cluster.local" $scheme $name .Release.Namespace }}
@@ -17,8 +18,13 @@ probably an edge case.
 Deployment summary:
 
         Version: {{ .Values.image.tag | default .Chart.AppVersion }}
-          Nodes: {{ .Values.replicaCount }}
+          Nodes: {{ .Values.replicaCount }}{{ empty $readonly | ternary "" " (voters)" }}
+{{- with $readonly }}
+                 {{ $readonly }} (read-only)
+{{- end }}
            Auth: {{ (empty .Values.config.users) | ternary "disabled (!)" "enabled" }}
+  Internode TLS: {{ .Values.config.tls.node.enabled | ternary "yes" "no" }}
+     Client TLS: {{ .Values.config.tls.client.enabled | ternary "yes" "no" }}
       Endpoints: {{ $svcurl }} (in-cluster)
 {{- /*
 If ingress is enabled, show the URLs for any defined hosts. If hosts weren't defined (user
@@ -33,8 +39,15 @@ heuristic in case the user has defined a regexp-based path for URL rewriting.
         {{- $url | nindent 17 }} (ingress)
     {{- end -}}
 {{- end }}
-  Internode TLS: {{ .Values.config.tls.node.enabled | ternary "yes" "no" }}
-     Client TLS: {{ .Values.config.tls.client.enabled | ternary "yes" "no" }}
+{{- if not (empty $readonly) -}}
+    {{- printf "%s://%s-readonly.%s.svc.cluster.local" $scheme $name .Release.Namespace | nindent 17 }} (in-cluster read-only)
+    {{- if dig "readonly" "ingress" "enabled" false .Values.AsMap }}
+        {{- range dig "readonly" "ingress" "hosts" list .Values.AsMap -}}
+            {{- $url := printf "https://%s%s" . (splitList "(" $.Values.readonly.ingress.path | first) -}}
+            {{- $url | nindent 17 }} (ingress read-only)
+        {{- end -}}
+    {{- end -}}
+{{- end }}
 
 On another pod inside the cluster, you can issue a test query using curl:
 
