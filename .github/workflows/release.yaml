@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-      # Only during the 0.x development phase until 1.x is released
-      - develop
   # Allows manual execution of jobs for testing
   workflow_dispatch:
 
