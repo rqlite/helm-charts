@@ -20,7 +20,7 @@ helm repo add rqlite https://rqlite.github.io/helm-charts
 Currently this repo only contains a single chart, for rqlite itself.
 
 👉 See the [rqlite chart
-documentation](https://github.com/rqlite/helm-charts/tree/develop/charts/rqlite).
+documentation](https://github.com/rqlite/helm-charts/tree/master/charts/rqlite).
 
 
 ## License
