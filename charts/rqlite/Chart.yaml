@@ -1,0 +1,13 @@
+apiVersion: v2
+name: rqlite
+version: 1.0.0
+appVersion: 8.14.1
+description: The lightweight, distributed relational database built on SQLite 
+type: application
+home: https://rqlite.io/
+sources:
+  - https://github.com/rqlite/
+  - https://github.com/rqlite/rqlite
+  - https://github.com/rqlite/helm-charts
+maintainers:
+  - name: jtackaberry

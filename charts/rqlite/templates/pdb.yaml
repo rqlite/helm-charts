@@ -1,0 +1,8 @@
+{{/* PDB for voter nodes */}}
+{{- include "rqlite.renderPDB" (dict "type" "voter" "ctx" $) -}}
+
+{{/* PDB for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+---
+{{- include "rqlite.renderPDB" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}

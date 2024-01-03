@@ -1,0 +1,465 @@
+# Overrides for the chart name and its computed full name.
+#
+# In most cases these can be left as null, but if you want your resources to be prefixed
+# with a different name than the release name, you can specify fullnameOverride to the
+# desired prefix.
+nameOverride: null
+fullnameOverride: null
+
+
+# Container image details for all nodes in the rqlite cluster. Applies to both voter
+# nodes and read-only nodes (if enabled below).
+image:
+  repository: docker.io/rqlite/rqlite
+  # Overrides the image tag whose default is the chart appVersion
+  tag: null
+  # Override the image pull policy. When undefined (as is default here), the field is
+  # omitted from the pod specs, which causes K8s to use its fairly reasonable default
+  # adaptive policy behavior.
+  #
+  # https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
+  pullPolicy: null
+  # Optionally specify an array of imagePullSecrets. You must create any secrets
+  # referenced here yourself in the same namespace.
+  #
+  # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  pullSecrets: []
+
+
+# The number of voting nodes (as opposed to read-only nodes). Voting nodes are
+# standard rqlite nodes and participate in the Raft consensus system.
+#
+# A single replica is the default for ease of use, but highly available deployments will
+# need an odd number greater than 1 (typically 3).
+#
+# When removing nodes from the cluster, don't update this value until the desired nodes
+# have been properly removed from the ring. First dynamically scale the StatefulSet down
+# and remove the node. See:
+#   https://rqlite.io/docs/guides/kubernetes/#shrinking-the-cluster
+#   https://rqlite.io/docs/clustering/general-guidelines/#removing-or-replacing-a-node
+replicaCount: 1
+
+
+# Use a statically generated peers list instead of DNS-based discovery.
+#
+# This should only be used to recover a broken cluster that has lost quorum and can't
+# start up properly by restoring the missing nodes. This could happen because, for
+# example, you have lost the underlying block storage for the original nodes.
+#
+# See "Recovering From Permanent Loss of Quorum" in the chart's README for more
+# information on how to use this setting as part of a recovery procedure.
+useStaticPeers: false
+
+# When enabled, a NetworkPolicy is created that restricts the inter-node raft port to
+# only be accessible to other rqlite nodes in the cluster.
+#
+# This will only take effect if the Kubernetes cluster has a CNI plugin that implements
+# NetworkPolicy (such as Calico).
+#
+# You will want to disable this if you require connectivity to the raft port from
+# outside the cluster.
+networkPolicy:
+  enabled: true
+
+
+# Pod requests and limits.
+#
+# https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  # Container limits not defined by default
+  # limits: {}
+
+
+# How to update the StatefulSets. This stanza is dropped in directly into the
+# updateStrategy map of the StatefulSet. Helm templating is supported.
+#
+# https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+updateStrategy:
+  type: RollingUpdate
+
+# rqlited is given this amount of time to gracefully shutdown before SIGKILL occurs.
+#
+# You may need to increase this for large data sets or slow storage, because SQLite
+# checkpoints the WAL to its database file on shutdown. The Kubelet issuing SIGKILL
+# during this process would be undesirable.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+terminationGracePeriodSeconds: 15
+
+# The pod-level security context. 
+#
+# By default, all rqlite containers are run as non-root. rqlite isn't opinionated about
+# the UID it runs under.
+#
+# https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+podSecurityContext:
+  runAsUser: 10050
+  runAsGroup: 10050
+  fsGroup: 10050
+  fsGroupChangePolicy: OnRootMismatch
+
+# The container-level security context. Custom Linux capabilities, Seccomp profiles,
+# SELinux labels, etc. may be defined here.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+securityContext: {}
+
+
+# Persistent Volume configuration.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+persistence:
+  # Setting this to false will store data on an empheral volume, which will be lost when
+  # the pod is cycled. Obviously this is only useful for testing or limited use cases.
+  enabled: true
+  # If null, the default storage class will be used
+  storageClassName: null
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Node labels for pod assignment. Helm templating is supported.
+#
+# https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+nodeSelector: {}
+
+# Node tolerations. Helm templating is supported.
+#
+# https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+tolerations: []
+
+# Node affinity/anti-affinity. Helm templating is supported.
+#
+# https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+affinity: {}
+
+# Topology spread constraints influence how pods are scheduled across the cluster.
+#
+# Helm templating is supported per the commented example below.
+#
+# https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+topologySpreadConstraints: []
+  # - topologyKey: topology.kubernetes.io/zone
+  #   maxSkew: 1
+  #   whenUnsatisfiable: ScheduleAnyway
+  #   labelSelector:
+  #     matchLabels:
+  #       app.kubernetes.io/name: '{{ template "rqlite.name" . }}'
+  #       app.kubernetes.io/instance: '{{ .Release.Name }}'
+
+
+# If pod disruption is empty (as is default below), it will ensure quorum can always be
+# met by using replicaCount (above) and allowing a maximum of N - (N/2 + 1) pods being
+# unavailable, but always tolerates at least 1 node down for the single replica case
+# (where downtime is implied to be acceptable).
+#
+# https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+#
+# This value is *not* inherited by read-only nodes, but can be defined separately (see
+# "readonly" below).
+podDisruptionBudget: {}
+
+# Additional labels for the rqlite pods.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+podLabels: {}
+
+# Annotations for the rqlite pods.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+podAnnotations: {}
+
+# Additional command line arguments to pass to rqlited.
+#
+# By default, foreign key constraints are enabled.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+extraArgs:
+  - -fk=true
+
+# Additional environment variables added to each rqlite pod.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+extraEnv: []
+# - name: SOME_VAR
+#   value: 'some value'
+
+# Additional arbitrary user-defined text-based config files added to each rqlite pod.
+#
+# The contents are stored in a Secret. The files are mounted within the rqlite pod under
+# /config/extra and the filename corresponds to the map key, and the value contains the
+# literal content of the files as a string. (Consequently, binary data isn't supported
+# here.)
+#
+# This can be used to support rqlite features not abstracted by the "config" section of
+# the Helm chart (below), and would typically be combined with extraArgs and/or extraEnv
+# above.
+extraFiles: {}
+
+
+# Readiness probe to determine if the pod is ready to receive traffic. Helm templating is
+# supported.
+#
+# https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+#
+# When rqlite user auth is enabled (see config.users below), an internal user will be
+# automatically created (with a random password) for health probes. The credentials
+# for this generated user are accessible within a template using .Release.rqlite.probeUser
+# and .Release.rqlite.probePassword. As a convenience for probes using HTTP basic auth,
+# the value .Release.rqlite.probeBasicAuthHeader contains a ready-made value for the
+# Authorization header.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+readinessProbe:
+  periodSeconds: 5
+  timeoutSeconds: 2
+  initialDelaySeconds: 3
+  httpGet:
+    # Set scheme to either HTTPS or HTTP basedon whether TLS is enabled in the config
+    # section below.
+    scheme: '{{ .Values.config.tls.client.enabled | ternary "HTTPS" "HTTP" }}'
+    path: /readyz
+    port: http
+    # Here we include the header for HTTP basic auth. If user authorization isn't enabled
+    # (i.e. config.users below is empty), then the Authorization header will just be the
+    # empty string, but this is harmless.
+    #
+    # This does mean the randomly generated probe user credentials are visible in
+    # cleartext in the StatefulSet manifest (because Kubernetes doesn't support sourcing
+    # probe headers from Secrets), but given how severely limited this user's privileges
+    # are, it's deemed an acceptable compromise.
+    httpHeaders:
+      - name: Authorization
+        value: '{{ empty .Values.config.users | ternary "" .Release.rqlite.probeBasicAuthHeader }}'
+
+# Startup probe used to gate liveness probes. Not used by default as readiness probe is
+# usually sufficient.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+startupProbe: {}
+
+# Liveness probe used by K8s to decide if a pod should be forcefully restarted.
+#
+# Be very cautious about enabling this. Liveness probes are a notorious footgun.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+livenessProbe: {}
+
+
+# The Kubernetes Service that clients can connect to.
+#
+# This value is inherited by read-only nodes but may be overridden (see "readonly" below).
+service:
+  type: ClusterIP
+  # Use K8s-default IP family
+  ipFamilyPolicy: null
+  ipFamilies: []
+  # Leave null to automatically generate a ClusterIP
+  clusterIP: null
+  # If type is NodePort or LoadBalancer, this may be defined to set an explicit node port.
+  # Note that this particular field is not inherited by the read-pool (if enabled) because
+  # uniqueness is required.
+  nodePort: null
+  # Service port defaults to port 80 when config.tls.http.enabled is false, or 443
+  # otherwise. But you can override the default choice here.
+  port: null
+  # A custom node port can be specified if type is NodePort or LoadBalancer
+  # nodePort: 31004
+  annotations: {}
+
+
+# An optional Kubernetes Ingress for the rqlite client HTTP(S) API.
+#
+# This value is *not* inherited by read-only nodes, but can be defined separately (see
+# "readonly" below).
+ingress:
+  # If true, the Ingress resource will be created
+  enabled: false
+  # If null, the default ingress class is used
+  ingressClassName: null
+  # FQDNs that the Ingress will respond to. If not defined, no host will be specified in
+  # the path definition, which means the path will match any DNS name mapped to the
+  # ingress.
+  hosts: []
+  # rqlite doesn't natively support subpathing, so if you want to use a non-root
+  # path you will need to annotate the Ingress according to your ingress controller
+  # to rewrite the path. For example, for ingress-nginx, see
+  # https://kubernetes.github.io/ingress-nginx/examples/rewrite/
+  path: /
+  # If using path rewriting with custom ingress annotations, set to ImplementationSpecific 
+  pathType: Prefix
+  # Custom annotations for the Ingress resource. Note that if config.client.tls.enabled is
+  # true, you will need to add the appropriate annotation for your ingress to have it
+  # connect to the backend over HTTPS. (As a convenience, the chart takes care of this
+  # for ingress-nginx natively, but if you use a different ingress controller, you'll need
+  # to set this yourself.)
+  annotations: {}
+  # Additional custom labels for the Ingress
+  extraLabels: {}
+  # If using a TLS certificate that isn't the ingress proxy's default, this references a
+  # Kubernetes Secret that contains the certifiicate, which must be manually created in
+  # the same namespace as rqlite. (Automatic certificate generation via cert-manager
+  # may be supported in the future.)
+  tls: []
+  #   - secretName: rqlite-server-tls
+  #     hosts:
+  #       - rqlite.example.com
+
+
+# rqlite supports a separate pool of read-only replicas, which can service read queries
+# with a read-consistency of none. See https://rqlite.io/docs/clustering/read-only-nodes/
+#
+# When a read-only node receives a request with any consistency level *other* than none,
+# it will forward the request to the cluster's current leader node. So be careful,
+# because failing to set a read-consistency of none will rather defeat the purpose of a
+# dedicated read-only node pool. (Note that the default consistency level is "weak" so
+# this does need to be explicitly set.)
+#
+# See also https://rqlite.io/docs/api/read-consistency/
+#
+# When readonly.replicaCount below is set to a value greater than 0, the Kubernetes
+# resources for the read-only pool will be created, which includes a dedicated K8s
+# Service. You can also create an Ingress for the read-only pool.
+#
+# Any top-level key documented above that's documented as applying by read-only nodes can
+# be defined/overridden in this section.
+#
+# Dict values above are NOT MERGED with the values here: anything defined here --
+# including null! -- fully *overrides* the top-level keys above. So, for example, if you
+# defined podAnnotations above and want to augment read-only pods with one additional
+# annotation, you'll need to fully redefine all the same podAnnotations here too, because
+# the chart won't merge them.
+readonly:
+  # Set a value greater than zero to enable read-only nodes. A separate K8s Service
+  # (suffixed with "readonly") is created to serve as an endpoint for read-only queries.
+  replicaCount: 0
+  # All other keys will fully override the voter node configuration above when they are
+  # defined (even as null) here.
+
+
+# The config section offers more convenient abstractions for aspects of rqlite
+# configuration.
+#
+# If you need some capability not provided here, it may be possible to accomplish using
+# extraArgs, extraEnv, and/or extraFiles above. However, if the feature you need is
+# available in this section, it's *strongly* advised you enable it here, as other
+# functionality of the Helm chart may depend on it.
+#
+# These values apply to all types of nodes (voters and read-only alike).
+config:
+  tls:
+    # TLS configuration for inter-node communication.
+    #
+    # https://rqlite.io/docs/guides/security/#node-to-node-encryption
+    #
+    # Tip: for certificates/keys offered as chart values, use YAML's block scalar '|'
+    # indicator to hold multi-line strings. For example:
+    #     cert: |
+    #       -----END CERTIFICATE-----
+    #       [...]
+    #       -----BEGIN CERTIFICATE-----
+    node:
+      # If true, inter-node TLS will be enabled. Note that rqlite doesn't support mixed
+      # mode operation, so toggling this flag will require taking downtime by first
+      # scaling the number of replicas down to 0 and then upgrading the Helm chart
+      # with the new value(s).
+      enabled: false
+      # Name of a native kubernetes.io/tls type Secret in the same namespace that
+      # holds the node's certificate. The secret must be created outside the chart.
+      # To specify a certificate via the chart, see the "cert" and "key" fields
+      # below.
+      secretName: null
+      # This is a server name that must appear in the node certificate SAN list in order
+      # to pass certificate verification when one node connects to another, for example
+      # rqlite.db.svc.cluster.local. If 'enabled' above is true, then this *must* be set
+      # or the chart will error.
+      #
+      # This is because rqlite nodes in the cluster are discovered via DNS, and
+      # connections are then established to the pod IPs, but pod IPs are unpredictable
+      # (unless you leverage special constructs like Calico IP Pools). This setting allows
+      # provisioning the certificate with a well-known SAN which can be verified.
+      # 
+      # If for some reason you want to disable this and force chart deployment anyway,
+      # set this value to the empty string ("") instead of null.
+      verifyServerName: null
+      # If true, mutual TLS is enabled using the node's certificate as both client and
+      # server cert. No SAN verification is done on the client cert, so any certificate
+      # issued by a known CA will be trusted. Consequently this is not a replacement
+      # for password-based authentication (see config.users below), but can be used to
+      # augment it.
+      mutual: false
+      # Disable all certificate verification for inter-node connections. This is
+      # obviously discouraged but it can be useful for testing.
+      insecureSkipVerify: false
+      # Server certificate in PEM format. Include all intermediate CA certificates here,
+      # if applicable. This is ignored if secretName is defined.
+      cert: ""
+      # Server private key in PEM format. This is ignored if secretName is defined.
+      key: ""
+      # Optional root CA certificate(s) used to validate certificates presented by other
+      # nodes. If not defined, the system's default trust store will be used. Mandatory if
+      # using a non-public CA.
+      ca: ""
+
+    # TLS configuration for clients of the HTTP API.
+    #
+    # https://rqlite.io/docs/guides/security/#https-api
+    client:
+      # If true, the Kubernetes Service will present an HTTPS interface on port 443
+      # (or service.port if you explicitly set it above).
+      enabled: false
+      # As with config.tls.node.secretName, but only affecting the client-facing port.
+      secretName: null
+      # If true, the client will be required to present a TLS client certificate.
+      # The required root CA for the client's cert can be defined in "ca" below.
+      #
+      # XXX: currently ignored due to https://github.com/rqlite/rqlite/issues/1508
+      mutual: false
+      # Server certificate in PEM format. Include all intermediate CA certificates here,
+      # if applicable. This is ignored if secretName is defined.
+      cert: ""
+      # Server private key in PEM format. This is ignored if secretName is defined.
+      key: ""
+      # Optional root CA certificate used to validate certificates presented by clients
+      # when mutual TLS is in use. If not defined, the system's default trust store will
+      # be used.
+      ca: ""
+
+
+  # When the users array is defined, HTTP basic authentication is enabled on rqlite. The
+  # YAML map below is JSONified directly with the structure you specify here, so it must
+  # conform to rqlite's requirements as described at:
+  #
+  # https://rqlite.io/docs/guides/security/#configuring-usernames-and-passwords
+  #
+  # Two additional internal systems users will be automatically created by the chart with
+  # randomly generated passwords: one used for Kubernetes health probes, and one for
+  # rqlite itself used for internode-communication.
+  #
+  # By default the users list is empty, which means no authentication is enabled on
+  # rqlite. Beware that in this case anyone who can reach it over the network has full
+  # privileges.
+  #
+  # rqlite does not currently support dynamically reloading of this file when it changes
+  # on disk, so you will need to do a rolling restart after updating.
+  users: []
+  #  - username: myapp
+  #    password: 9uyYgs2NugvpSrEcZCmsu4mYdm1FBPZ9
+  #    perms: [execute, query]

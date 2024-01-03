@@ -1,0 +1,49 @@
+{{/* vi: ft=helm.mustache */}}
+{{- $name := tpl (include "rqlite.fullname" .) $ -}}
+{{/* Construct URL for in-cluster access */}}
+{{- $scheme := .Values.config.tls.client.enabled | ternary "https" "http" }}
+{{- $svcurl := printf "%s://%s.%s.svc.cluster.local" $scheme $name .Release.Namespace }}
+{{/*
+If auth is enabled, grab (somewhat randomly) the first username in the users list for the
+demo curl command.  It's not guaranteed that user will have query permissions, but that's
+probably an edge case.
+*/}}
+{{- $curlopts := (empty .Values.config.users) | ternary "" (
+        printf "-u %s:<password> " (get (.Values.config.users | first)  "username" | default "<user>")
+    )
+}}
+{{- $curlcmd := printf "%s'%%s/db/query?pretty' --data-urlencode 'q=select unixepoch(\"subsecond\")'" $curlopts -}}
+
+Deployment summary:
+
+        Version: {{ .Values.image.tag | default .Chart.AppVersion }}
+          Nodes: {{ .Values.replicaCount }}
+           Auth: {{ (empty .Values.config.users) | ternary "disabled (!)" "enabled" }}
+      Endpoints: {{ $svcurl }} (in-cluster)
+{{- /*
+If ingress is enabled, show the URLs for any defined hosts. If hosts weren't defined (user
+elected to use the ingress default) then we don't know what FQDN to use, so skip it. The
+URL path up to (but not including) the first bracket is displayed, which is a small
+heuristic in case the user has defined a regexp-based path for URL rewriting.
+*/ -}}
+{{- if .Values.ingress.enabled -}}
+    {{- range .Values.ingress.hosts -}}
+        {{- $url := printf "https://%s%s" . (splitList "(" $.Values.ingress.path | first) -}}
+        {{- $_ := set $ "ingressurl" $url -}}
+        {{- $url | nindent 17 }} (ingress)
+    {{- end -}}
+{{- end }}
+  Internode TLS: {{ .Values.config.tls.node.enabled | ternary "yes" "no" }}
+     Client TLS: {{ .Values.config.tls.client.enabled | ternary "yes" "no" }}
+
+On another pod inside the cluster, you can issue a test query using curl:
+
+  $ curl -Gks {{ printf $curlcmd $svcurl }}
+
+{{- if and .Values.ingress.enabled .Values.ingress.hosts }}
+
+Or outside the cluster via the defined ingress:
+
+  $ curl -Gs {{ printf $curlcmd $.ingressurl }}
+
+{{- end }}

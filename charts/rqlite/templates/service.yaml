@@ -1,0 +1,8 @@
+{{/* Services for voter nodes */}}
+{{- include "rqlite.renderService" (dict "type" "voter" "ctx" $) -}}
+
+{{/* Services for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+---
+{{- include "rqlite.renderService" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}

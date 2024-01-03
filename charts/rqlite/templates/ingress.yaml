@@ -1,0 +1,12 @@
+{{/* Ingress for voter nodes */}}
+{{- if .Values.ingress.enabled }}
+{{- include "rqlite.renderIngress" (dict "type" "voter" "ctx" $) -}}
+{{- end }}
+
+{{/* Ingress for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+{{- if dig "readonly" "ingress" "enabled" false .Values.AsMap }}
+---
+{{- include "rqlite.renderIngress" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}
+{{- end }}

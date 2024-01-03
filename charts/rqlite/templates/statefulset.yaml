@@ -1,0 +1,8 @@
+{{/* StatefulSet for voter nodes */}}
+{{- include "rqlite.renderStatefulSet" (dict "type" "voter" "ctx" $) -}}
+
+{{/* Statefulset for readonly nodes if enabled */}}
+{{- if dig "readonly" "replicaCount" 0 .Values.AsMap }}
+---
+{{- include "rqlite.renderStatefulSet" (dict "type" "readonly" "ctx" $) -}}
+{{- end }}
