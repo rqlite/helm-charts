@@ -156,6 +156,9 @@ Connected to https://127.0.0.1:4001 running version v8.14.1
 127.0.0.1:4001> .remove rqlite-3
 ```
 
+Note that the node ids are the pod names. If you deployed the chart with a release name
+`rqlite-myapp` instead, then the node ids would be `rqlite-myapp-3 and `rqlite-myapp-4`.
+
 Then you can reinstall the chart with the lower replica count:
 
 ```bash
