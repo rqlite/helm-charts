@@ -126,7 +126,7 @@ Nodes come in two flavors: voting and read-only (non-voting).
 The chart value `replicaCount` dictates the number of voting nodes in the cluster. It's
 strongly recommended that voting nodes only be scaled up or down by updating this value
 and redeploying the chart (via `helm upgrade`), because the replica count is used in
-several places (such as the PodDisruptionBudget).
+multiple places in the chart (such as the PodDisruptionBudget).
 
 Scaling voting nodes up can be done simply by increasing `replicaCount` and running `helm
 upgrade`.  The new nodes will mount a fresh PV, join the cluster, and synchronize the data
@@ -139,9 +139,29 @@ You can't simply decrease `replicaCount` and be done with it, because once votin
 have joined the rqlite cluster, the rest of the nodes in the cluster will be expecting
 them to re-join until they are explicitly removed.
 
+The basic procedure for scaling down the voting nodes is:
+ 1. Redeploy the chart with the updated `replicaCount` to shrink the StatefulSet
+ 2. Use the `rqlite` CLI or the HTTP API to remove each node that was dropped
+
+It's important to shrink the voters in this order. Although the rest of the cluster will
+complain loudly in the logs about the missing nodes until step 2 is completed, running the
+procedure in reverse will cause transactions to be routed to the removed (now leaderless)
+nodes until they eventually fail their readiness probes, where clients issuing those
+requests will experience HTTP 503 errors.
+
+One caveat to this order: you must ensure you never remove more than N/2-1 nodes at a
+time, otherwise quorum will be lost.
+
 For example, suppose you've deployed the chart with the release name `rqlite` in a
-namespace called `db`, and you have a 5-node cluster and want to shrink to 3 nodes. First
-remove the last two nodes in the cluster:
+namespace called `db`, and you have a 5-node cluster and want to shrink to 3 nodes. First,
+reinstall the chart with the lower replica count:
+
+```bash
+# In practice you'll more likely update your custom values.yaml
+$ helm upgrade -n db rqlite rqlite/rqlite --set replicaCount=3
+```
+
+Then you can administratively drop the last 2 nodes from the rqlite cluster:
 
 ```bash
 # Connect to the first voting note of the cluster.
@@ -157,18 +177,7 @@ Connected to https://127.0.0.1:4001 running version v8.14.1
 ```
 
 Note that the node ids are the pod names. If you deployed the chart with a release name
-`rqlite-myapp` instead, then the node ids would be `rqlite-myapp-3 and `rqlite-myapp-4`.
-
-Then you can reinstall the chart with the lower replica count:
-
-```bash
-# In practice you'll more likely update your custom values.yaml
-$ helm upgrade -n db rqlite rqlite/rqlite --set replicaCount=3
-```
-
-If you've scaled down *before* removing the nodes, don't worry, as long as you still have
-quorum the deleted pods can still be removed after-the-fact, albeit with a little more
-squawking in the logs.
+`rqlite-myapp` instead, then the node ids would be `rqlite-myapp-3` and `rqlite-myapp-4`.
 
 
 #### Recovering From Permanent Loss of Quorum

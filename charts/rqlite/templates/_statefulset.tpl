@@ -129,7 +129,7 @@ spec:
               # place. But first remove any existing peers file, which we do regardless as
               # in normal operation we use DNS discovery.
               rm -f /rqlite/raft/peers.info
-              if [ "`cat /config/peers/enable`" = "true" ]; then
+              if [ "`cat /config/peers/use-static-peers`" = "true" ]; then
                 echo "WARNING: Using generated static peers. This is a recovery procedure and must be reverted after service is restored."
                 cat /config/peers/peers.json
                 cp /config/peers/peers.json /rqlite/raft
@@ -179,7 +179,11 @@ spec:
             - -raft-cluster-remove-shutdown=true
             - -raft-non-voter=true
             {{- else }}
-            - -bootstrap-expect={{ $.Values.replicaCount }}
+            # This is value is interpolated by the Kubelet using the Kubernetes
+            # substitution syntax instead of being rendered by the Helm chart to ensure
+            # that changes to replicaCount doesn't result in a rolling restart of all pods
+            # in the StatefulSet.
+            - -bootstrap-expect=$(VOTER_REPLICA_COUNT)
             {{- end }}
             - -join-interval=1s
             - -join-attempts=120
@@ -199,6 +203,13 @@ spec:
           env:
             - name: DATA_DIR
               value: "/rqlite"
+            {{- if not $readonly }}
+            - name: VOTER_REPLICA_COUNT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $name }}-peers
+                  key: voter-replica-count
+            {{- end }}
             {{- with dig "extraEnv" $.Values.extraEnv $values }}
               {{- tpl (toYaml .) $ | nindent 12 }}
             {{- end }}

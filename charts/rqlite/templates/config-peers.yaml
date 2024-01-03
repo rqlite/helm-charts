@@ -1,6 +1,6 @@
 {{/*
-This ConfigMap contains a pre-generated static list of peers, which used by the
-useStaticPeers chart option.
+This ConfigMap contains a information about peers in the cluster, including the
+pre-generated static list of peers used by the useStaticPeers chart option.
 */}}
 {{- $name := tpl (include "rqlite.fullname" .) $ -}}
 {{- $peers := list }}
@@ -25,6 +25,7 @@ metadata:
   labels:
     {{- include "rqlite.labels" . | nindent 4 }}
 data:
-  enable: "{{- .Values.useStaticPeers | default false }}"
+  voter-replica-count: "{{- .Values.replicaCount | default 1 }}"
+  use-static-peers: "{{- .Values.useStaticPeers | default false }}"
   peers.json: |-
     {{- $peers | mustToPrettyJson | nindent 4 }}
