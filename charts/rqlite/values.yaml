@@ -1,6 +1,8 @@
 # Overrides for the chart name and its computed full name.
 #
-# In most cases these can be left as null.
+# In most cases these can be left as null, but if you want your resources to be prefixed
+# with a different name than the release name, you can specify fullnameOverride to the
+# desired prefix.
 nameOverride: null
 fullnameOverride: null
 
