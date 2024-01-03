@@ -234,7 +234,7 @@ some other orchestrator.
 
 ## Versioning
 
-Helm charts use semantic versioning, and rqlite offers the following guarantees:
+Helm charts use semantic versioning, and rqlite's chart offers the following guarantees:
  * Breaking changes will only be introduced in new major versions
     * where "breaking" is defined as you needing to modify the Helm chart values to avoid
       breaking your deployment, or when the chart points to a version of rqlite which
@@ -245,8 +245,10 @@ Helm charts use semantic versioning, and rqlite offers the following guarantees:
  * Releases containing only bug fixes or trivial features will be introduced in patch
    releases
 
-**Exception**: while the chart is under active development as version 0.x, breaking changes
-will be introduced in minor revisions, not major ones (e.g. v0.10.0 -> v0.11.0).
+This approach extends to updates to rqlite itself: if rqlite releases a new minor version
+(8.14.x to 8.15.0, say) and the chart's *only* update is to point to this new version, the
+chart will be given a minor version increase rather than a patch-level increase, despite
+the trivial nature of the change to the chart itself.
 
 
 ## License
