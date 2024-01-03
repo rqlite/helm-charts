@@ -149,8 +149,8 @@ procedure in reverse will cause transactions to be routed to the removed (now le
 nodes until they eventually fail their readiness probes, where clients issuing those
 requests will experience HTTP 503 errors.
 
-One caveat to this order: you must ensure you never remove more than N/2-1 nodes at a
-time, otherwise quorum will be lost.
+One caveat to this order: you must ensure you never remove more than ceiling(N/2)-1 nodes
+at a time, otherwise quorum will be lost.
 
 For example, suppose you've deployed the chart with the release name `rqlite` in a
 namespace called `db`, and you have a 5-node cluster and want to shrink to 3 nodes. First,
