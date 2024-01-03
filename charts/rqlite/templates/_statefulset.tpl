@@ -134,7 +134,11 @@ spec:
                 cat /config/peers/peers.json
                 cp /config/peers/peers.json /rqlite/raft
               fi
-              exec /bin/docker-entrypoint.sh "$@"
+              # Exec original entrypoint and pass all arguments through, including $0
+              # which is actually the first argument due to this inline script being
+              # executed as a command string.
+              exec /bin/docker-entrypoint.sh "$0" "$@"
+
             # All arguments after this point are passed through to docker-entrypoint.sh
             # by the init script above.
             {{- if $config.users }}
