@@ -129,7 +129,7 @@ spec:
               # place. But first remove any existing peers file, which we do regardless as
               # in normal operation we use DNS discovery.
               rm -f /rqlite/raft/peers.info
-              if [ "`cat /config/peers/use-static-peers`" = "true" ]; then
+              if [ "$RQLITE_USE_STATIC_PEERS" = "true" ]; then
                 echo "WARNING: Using generated static peers. This is a recovery procedure and must be reverted after service is restored."
                 cat /config/peers/peers.json
                 cp /config/peers/peers.json /rqlite/raft
@@ -187,7 +187,7 @@ spec:
             # substitution syntax instead of being rendered by the Helm chart to ensure
             # that changes to replicaCount doesn't result in a rolling restart of all pods
             # in the StatefulSet.
-            - -bootstrap-expect=$(VOTER_REPLICA_COUNT)
+            - -bootstrap-expect=$(RQLITE_VOTER_REPLICA_COUNT)
             {{- end }}
             - -join-interval=1s
             - -join-attempts=120
@@ -207,8 +207,13 @@ spec:
           env:
             - name: DATA_DIR
               value: "/rqlite"
+            - name: RQLITE_USE_STATIC_PEERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $name }}-peers
+                  key: use-static-peers
             {{- if not $readonly }}
-            - name: VOTER_REPLICA_COUNT
+            - name: RQLITE_VOTER_REPLICA_COUNT
               valueFrom:
                 configMapKeyRef:
                   name: {{ $name }}-peers

@@ -1,5 +1,5 @@
 {{/*
-This ConfigMap contains a information about peers in the cluster, including the
+This ConfigMap contains information about peers in the cluster, including the
 pre-generated static list of peers used by the useStaticPeers chart option.
 */}}
 {{- $name := tpl (include "rqlite.fullname" .) $ -}}
