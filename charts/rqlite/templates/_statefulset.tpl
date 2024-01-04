@@ -132,6 +132,7 @@ spec:
               if [ "$RQLITE_USE_STATIC_PEERS" = "true" ]; then
                 echo "WARNING: Using generated static peers. This is a recovery procedure and must be reverted after service is restored."
                 cat /config/peers/peers.json
+                mkdir -p /rqlite/raft
                 cp /config/peers/peers.json /rqlite/raft
               fi
               # Exec original entrypoint and pass all arguments through, including $0
