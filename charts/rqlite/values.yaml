@@ -32,11 +32,9 @@ image:
 # A single replica is the default for ease of use, but highly available deployments will
 # need an odd number greater than 1 (typically 3).
 #
-# When removing nodes from the cluster, don't update this value until the desired nodes
-# have been properly removed from the ring. First dynamically scale the StatefulSet down
-# and remove the node. See:
-#   https://rqlite.io/docs/guides/kubernetes/#shrinking-the-cluster
-#   https://rqlite.io/docs/clustering/general-guidelines/#removing-or-replacing-a-node
+# Removing nodes from an rqlite cluster requires more than just decreasing this value.
+# See the "Scaling Voting Nodes" section of chart's README for details of the correct
+# procedure.
 replicaCount: 1
 
 
@@ -232,7 +230,7 @@ readinessProbe:
   timeoutSeconds: 2
   initialDelaySeconds: 3
   httpGet:
-    # Set scheme to either HTTPS or HTTP basedon whether TLS is enabled in the config
+    # Set scheme to either HTTPS or HTTP based on whether TLS is enabled in the config
     # section below.
     scheme: '{{ .Values.config.tls.client.enabled | ternary "HTTPS" "HTTP" }}'
     path: /readyz
@@ -314,9 +312,9 @@ ingress:
   # Additional custom labels for the Ingress
   extraLabels: {}
   # If using a TLS certificate that isn't the ingress proxy's default, this references a
-  # Kubernetes Secret that contains the certifiicate, which must be manually created in
-  # the same namespace as rqlite. (Automatic certificate generation via cert-manager
-  # may be supported in the future.)
+  # Kubernetes Secret that contains the certificate, which must be manually created in the
+  # same namespace as rqlite. (Automatic certificate generation via cert-manager may be
+  # supported in the future.)
   tls: []
   #   - secretName: rqlite-server-tls
   #     hosts:
@@ -338,8 +336,8 @@ ingress:
 # resources for the read-only pool will be created, which includes a dedicated K8s
 # Service. You can also create an Ingress for the read-only pool.
 #
-# Any top-level key documented above that's documented as applying by read-only nodes can
-# be defined/overridden in this section.
+# Any top-level key above that's documented as applying to read-only nodes can be
+# defined/overridden in this section.
 #
 # Dict values above are NOT MERGED with the values here: anything defined here --
 # including null! -- fully *overrides* the top-level keys above. So, for example, if you
@@ -359,7 +357,7 @@ readonly:
 #
 # If you need some capability not provided here, it may be possible to accomplish using
 # extraArgs, extraEnv, and/or extraFiles above. However, if the feature you need is
-# available in this section, it's *strongly* advised you enable it here, as other
+# available in this section, it's *strongly* recommended you enable it here, because other
 # functionality of the Helm chart may depend on it.
 #
 # These values apply to all types of nodes (voters and read-only alike).
@@ -382,9 +380,9 @@ config:
       # with the new value(s).
       enabled: false
       # Name of a native kubernetes.io/tls type Secret in the same namespace that
-      # holds the node's certificate. The secret must be created outside the chart.
-      # To specify a certificate via the chart, see the "cert" and "key" fields
-      # below.
+      # holds the node's certificate. The secret must be created outside the chart in the
+      # same namespace. To specify a certificate via the chart, see the "cert" and "key"
+      # fields below.
       secretName: null
       # This is a server name that must appear in the node certificate SAN list in order
       # to pass certificate verification when one node connects to another, for example
