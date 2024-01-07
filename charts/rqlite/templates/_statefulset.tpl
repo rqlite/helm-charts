@@ -189,6 +189,12 @@ spec:
             # that changes to replicaCount doesn't result in a rolling restart of all pods
             # in the StatefulSet.
             - -bootstrap-expect=$(RQLITE_VOTER_REPLICA_COUNT)
+            {{- if dig "backup" "autoBackup" "enabled" false $config }}
+            - -auto-backup=/config/sensitive/backup.json
+            {{- end }}
+            {{- if dig "backup" "autoRestore" "enabled" false $config }}
+            - -auto-restore=/config/sensitive/restore.json
+            {{- end }}
             {{- end }}
             - -join-interval=1s
             - -join-attempts=120

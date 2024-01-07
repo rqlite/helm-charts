@@ -232,6 +232,48 @@ and can thereafter be dynamically scaled, either by running `kubectl scale`, usi
 some other orchestrator.
 
 
+## Auto Backup and Restore
+
+rqlite provides support for [automatically backing up its data to S3-compatible
+storage](https://rqlite.io/docs/guides/backup/#automatic-backups), and even automatically
+restoring from that backup when the cluster is being bootstrapped from a clean (data-less)
+state.
+
+The Helm chart exposes this capability under the `config.backup` dict.  Here, the S3
+storage details are provided in `config.backup.storage`, which applies to both backup and
+restore, and then automatic backup and restore can be independently enabled using
+`config.backup.autoBackup.enabled` and `config.backup.autoRestore.enabled` respectively.
+
+The example below configures both automatic backup and restore to a MinIO deployment at
+`s3.example.com` with credentials for a MinIO Service Account with a policy that grants
+read/write access to a bucket called `rqlite`:
+
+```yaml
+config:
+  backup:
+    storage:
+      # MinIO Service Account credentials
+      accessKeyId: cdRtR5mRJMvtMJz51Cts
+      secretAccessKey: YY6RieQEwbbek3rhjOPwbwEUIkg8kYhhbxrL0h3R
+      bucket: rqlite
+      # region is a required field, but the value doesn't generally matter with MinIO
+      region: us-east-1
+      path: backups/mydatabase.sqlite.gz
+      # Endpoint must be defined for any non-Amazon-native S3 storage
+      endpoint: s3.example.com
+      # Most MinIO deployments use path-style requests, so unlike Amazon S3 (where this
+      # is not recommended to be set), for MinIO we set it to true
+      forcePathStyle: true
+    autoBackup:
+      # Enable automatic backups every 30 minutes
+      enabled: true
+      interval: 30m
+    autoRestore:
+      # Enable automatic restoration when the cluster is being bootstrapped
+      # with no existing data.
+      enabled: true
+```
+
 ## Versioning
 
 Helm charts use semantic versioning, and rqlite's chart offers the following guarantees:
