@@ -461,3 +461,59 @@ config:
   #  - username: myapp
   #    password: 9uyYgs2NugvpSrEcZCmsu4mYdm1FBPZ9
   #    perms: [execute, query]
+
+  # This section configures rqlite's automatic backup/restore functionality, which supports
+  # S3-compatible cloud storage providers.
+  #
+  # See also https://rqlite.io/docs/guides/backup/
+  #
+  # Be aware that apart from the "enable" field, any other change will require a
+  # rolling restart of rqlite to pick up the changes.
+  backup:
+    # The storage map describes the S3 bucket that applies to both backups and restores
+    # (if either is enabled).
+    storage:
+      # These are the credentials used to access the bucket.
+      accessKeyId: ""
+      secretAccessKey: ""
+      # The S3 endpoint URL is optional when using native Amazon S3, but for non-Amazon
+      # providers such as Wasabi, Backblaze B2, or self-hosted solutions like MinIO, you
+      # will need to specify it.
+      #
+      # HTTPS is assumed if no URL scheme is given, so in most cases you can just specify
+      # the FQDN here, e.g. "s3.eu-central-1.wasabisys.com". However if non-SSL HTTP is
+      # required, for example with self-hosted MinIO on the same network, you can prefix
+      # the endpoint with http://
+      endpoint: null
+      # The name of the S3 bucket backups are written to (or pulled from)
+      bucket: rqlite-bucket
+      # The region of the S3 bucket.  With MinIO this is usually just "us-east-1"
+      region: us-east-1
+      # Full path and object name of the backup file
+      path: backups/rqlite.sqlite.gz
+    autoBackup:
+      # Whether to enable automatic backups
+      enabled: false
+      # Backup frequency. This is a duration string as defined at
+      # https://pkg.go.dev/maze.io/x/duration#ParseDuration
+      interval: 1h
+      # Whether to run a VACUUM on the SQLite database prior to exporting for backup.
+      # This requires having sufficient free disk space.  See also
+      # https://www.sqlite.org/lang_vacuum.html
+      vacuum: false
+      # Normally backups are compressed prior to uploading. Set to true to disable
+      # compression.
+      noCompress: false
+    autoRestore:
+      # Whether to enable automatic restoration on startup. This will only occur when the
+      # PV has no existing data, and only by the elected rqlite leader.
+      enabled: false
+      # How long to wait for backup files to be downloaded from cloud storage before
+      # giving up. Note this isn't related to network timeouts or download stalls: this
+      # applies equally to successful downloads as well. For larger data sets, you may
+      # want to increase this from the chart default.
+      timeout: 5m
+      # By default, download failures (including timeouts) will cause rqlite to exit, and
+      # the pod will be restarted. Set this to true if you want rqlite to continue startup
+      # despite a download failure.
+      continueOnFailure: false
