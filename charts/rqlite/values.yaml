@@ -91,7 +91,7 @@ updateStrategy:
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
 terminationGracePeriodSeconds: 15
 
-# The pod-level security context. 
+# The pod-level security context.
 #
 # By default, all rqlite containers are run as non-root. rqlite isn't opinionated about
 # the UID it runs under.
@@ -301,7 +301,7 @@ ingress:
   # to rewrite the path. For example, for ingress-nginx, see
   # https://kubernetes.github.io/ingress-nginx/examples/rewrite/
   path: /
-  # If using path rewriting with custom ingress annotations, set to ImplementationSpecific 
+  # If using path rewriting with custom ingress annotations, set to ImplementationSpecific
   pathType: Prefix
   # Custom annotations for the Ingress resource. Note that if config.client.tls.enabled is
   # true, you will need to add the appropriate annotation for your ingress to have it
@@ -393,7 +393,7 @@ config:
       # connections are then established to the pod IPs, but pod IPs are unpredictable
       # (unless you leverage special constructs like Calico IP Pools). This setting allows
       # provisioning the certificate with a well-known SAN which can be verified.
-      # 
+      #
       # If for some reason you want to disable this and force chart deployment anyway,
       # set this value to the empty string ("") instead of null.
       verifyServerName: null
