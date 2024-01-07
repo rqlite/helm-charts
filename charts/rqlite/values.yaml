@@ -112,6 +112,29 @@ podSecurityContext:
 securityContext: {}
 
 
+# Configures the K8s Service Account for rqlite pods. rqlite doesn't use the K8s API, so
+# by default a service account is neither created nor used. However, if you're using
+# automatic backup/restore (see config.backup below) and the chart is deployed on EKS in
+# AWS, you will probably want to use an IAM Role for Service Accounts (IRSA):
+#
+# https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
+#
+# IRSA allows rqlite to access the S3 bucket for backup/restore without configuring static
+# credentials.
+serviceAccount:
+  # If true, the chart will create a ServiceAccount resource, in which case the "name"
+  # must be set below otherwise the chart will error. Set this to false if rqlite should
+  # not use service account (the default), or if you're precreating your own
+  # ServiceAccount (for example because you used Terraform to create an IRSA role and
+  # corresponding K8s Service Account).
+  create: false
+  # The name of the service account to use for rqlite pods. If this is empty, then
+  # no service account will be used by rqlite pods.
+  name: ""
+  # Custom annotations to add to the ServiceAccount
+  annotations: {}
+
+
 # Persistent Volume configuration.
 #
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).

@@ -49,8 +49,12 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      # rqlite doesn't require the K8s API
+      {{- if $.Values.serviceAccount.name }}
+      serviceAccountName: {{ $.Values.serviceAccount.name }}
+      {{- else }}
       automountServiceAccountToken: false
+      {{- end }}
+
       terminationGracePeriodSeconds: {{ dig "terminationGracePeriodSeconds" $.Values.terminationGracePeriodSeconds $values }}
 
       {{- with dig "podSecurityContext" $.Values.podSecurityContext $values }}
