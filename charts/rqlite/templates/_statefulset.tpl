@@ -206,6 +206,9 @@ spec:
             {{- with dig "nodeSelector" $.Values.nodeSelector $values }}
               {{- tpl (toYaml .) $ | nindent 12 }}
             {{- end }}
+            {{- with $.Values.extraArgs }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
           {{- with dig "resources" $.Values.resources $values }}
           resources:
             {{- toYaml . | nindent 12 }}
