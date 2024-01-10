@@ -105,10 +105,22 @@ spec:
             secretName: {{ $config.tls.node.secretName }}
             defaultMode: 288 # 0400
       {{- end }}
+      {{- if $config.tls.node.caSecretName }}
+        - name: node-tls-ca
+          secret:
+            secretName: {{ $config.tls.node.caSecretName }}
+            defaultMode: 288 # 0400
+      {{- end }}
       {{- if $config.tls.client.secretName }}
         - name: client-tls
           secret:
             secretName: {{ $config.tls.client.secretName }}
+            defaultMode: 288 # 0400
+      {{- end }}
+      {{- if $config.tls.client.caSecretName }}
+        - name: client-tls-ca
+          secret:
+            secretName: {{ $config.tls.client.caSecretName }}
             defaultMode: 288 # 0400
       {{- end }}
       {{- if not (dig "persistence" "enabled" $.Values.persistence.enabled $values) }}
@@ -159,7 +171,9 @@ spec:
             {{- else if kindIs "invalid" $config.tls.node.verifyServerName }}
               {{- fail "config.tls.node.verifyServerName must be defined when config.tls.node.enabled is true" }}
             {{- end }}
-            {{- if $config.tls.node.ca }}
+            {{- if $config.tls.node.caSecretName }}
+            - -node-ca-cert=/config/node-tls-ca/ca.crt
+            {{- else if $config.tls.node.ca }}
             - -node-ca-cert=/config/sensitive/node-ca.crt
             {{- end }}
             {{- if $config.tls.node.mutual }}
@@ -174,7 +188,9 @@ spec:
             {{- $basefile := empty $config.tls.client.secretName | ternary "/config/sensitive/client" "/config/client-tls/tls" }}
             - -http-cert={{ $basefile }}.crt
             - -http-key={{ $basefile }}.key
-            {{- if $config.tls.client.ca }}
+            {{- if $config.tls.client.caSecretName }}
+            - -http-ca-cert=/config/client-tls-ca/ca.crt
+            {{- else if $config.tls.client.ca }}
             - -http-ca-cert=/config/sensitive/client-ca.crt
             {{- end }}
             {{- if $config.tls.client.mutual }}
@@ -280,9 +296,17 @@ spec:
             - name: node-tls
               mountPath: /config/node-tls
             {{- end }}
+            {{- if $config.tls.node.caSecretName }}
+            - name: node-tls-ca
+              mountPath: /config/node-tls-ca
+            {{- end }}
             {{- if $config.tls.client.secretName }}
             - name: client-tls
               mountPath: /config/client-tls
+            {{- end }}
+            {{- if $config.tls.client.caSecretName }}
+            - name: client-tls-ca
+              mountPath: /config/client-tls-ca
             {{- end }}
   {{- $persistence := dig "persistence" $.Values.persistence $values }}
   {{- if $persistence.enabled }}

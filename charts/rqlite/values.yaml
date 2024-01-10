@@ -434,10 +434,27 @@ config:
       cert: ""
       # Server private key in PEM format. This is ignored if secretName is defined.
       key: ""
-      # Optional root CA certificate(s) used to validate certificates presented by other
-      # nodes. If not defined, the system's default trust store will be used. Mandatory if
-      # using a non-public CA.
+      # Optional PEM-formatted root CA certificate(s) used to validate certificates
+      # presented by other nodes. If not defined, the system's default trust store will be
+      # used. Mandatory if using a non-public CA. Multiple PEM certificates may be
+      # concatenated in this string to trust more than one authority.
+      #
+      # This value is unused if "mutual" above is false.
       ca: ""
+      # As an alternative to directly specifying the CA certificates in the "ca" field
+      # above, the CA(s) can be sourced from a Kubernetes Secret. The Secret must be
+      # pre-created in the same namespace, must contain a key "ca.crt" whose value is in
+      # PEM format.
+      #
+      # For example, if using cert-manager to generate certificates, some issuer types
+      # will include a ca.crt field in the Secret holding generated certificate. In this
+      # scenario, because rqlite uses the same certificate for both server and client
+      # certificates when mutual TLS is enabled, you may find it convenient to use the
+      # same Kubernetes Secret as "secretName" above.
+      #
+      # This value takes precedence over "ca" if defined, and is unused if "mutual" above
+      # is false.
+      caSecretName: null
 
     # TLS configuration for clients of the HTTP API.
     #
@@ -462,6 +479,14 @@ config:
       # when mutual TLS is in use. If not defined, the system's default trust store will
       # be used.
       ca: ""
+      # As an alternative to directly specifying the CA certificates in the "ca" field
+      # above, the CA(s) can be sourced from a Kubernetes Secret. The Secret must be
+      # pre-created in the same namespace, must contain a key "ca.crt" whose value is in
+      # PEM format.
+      #
+      # This value takes precedence over "ca" if defined, and is unused if "mutual" above
+      # is false.
+      caSecretName: null
 
 
   # When the users array is defined, HTTP basic authentication is enabled on rqlite. The
