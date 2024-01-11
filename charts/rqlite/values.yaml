@@ -166,8 +166,29 @@ tolerations: []
 #
 # https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes-using-node-affinity/
 #
+# The default chart value ensures rqlite is only scheduled on amd64 nodes. This is because
+# rqlite's image on Docker Hub currently only supports amd64, so scheduling rqlite pods on
+# other architectures will only result in CrashLoopBackoff.
+#
+# If you're using your own non-amd64 container images, then in addition to updating the
+# image map above, you will also need to replace the affinity field to override the chart
+# default. (Reminder that setting a Helm map value to null will override the chart
+# default. If you specify a map value it will be merged, which may not be the desired
+# outcome.)
+#
+# Once rqlite supports multi-arch images this will be updated accordingly.  See also
+# https://github.com/rqlite/rqlite/issues/1077
+#
 # This value is inherited by read-only nodes but may be overridden (see "readonly" below).
-affinity: {}
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+          - key: "kubernetes.io/arch"
+            operator: In
+            values:
+              - amd64
 
 # Topology spread constraints influence how pods are scheduled across the cluster.
 #
