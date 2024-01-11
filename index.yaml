@@ -3,6 +3,23 @@ entries:
   rqlite:
   - apiVersion: v2
     appVersion: 8.16.3
+    created: "2024-01-11T23:23:01.551426671Z"
+    description: The lightweight, distributed relational database built on SQLite
+    digest: 30b2304c86d96d1eb37edfc16f2befe9c1996770c94281f05333d4c8934223e2
+    home: https://rqlite.io/
+    maintainers:
+    - name: jtackaberry
+    name: rqlite
+    sources:
+    - https://github.com/rqlite/
+    - https://github.com/rqlite/rqlite
+    - https://github.com/rqlite/helm-charts
+    type: application
+    urls:
+    - https://github.com/rqlite/helm-charts/releases/download/rqlite-1.3.1/rqlite-1.3.1.tgz
+    version: 1.3.1
+  - apiVersion: v2
+    appVersion: 8.16.3
     created: "2024-01-11T00:10:18.761778757Z"
     description: The lightweight, distributed relational database built on SQLite
     digest: 455fe4ec3c8808b404e6383e784c33e982ad7771d6b22c5d7b001b43f6658263
@@ -169,4 +186,4 @@ entries:
     urls:
     - https://github.com/rqlite/helm-charts/releases/download/rqlite-0.1.0/rqlite-0.1.0.tgz
     version: 0.1.0
-generated: "2024-01-11T00:10:18.761824923Z"
+generated: "2024-01-11T23:23:01.551472536Z"
