@@ -1,7 +1,7 @@
 apiVersion: v2
 name: rqlite
 version: 1.6.0
-appVersion: 8.21.1
+appVersion: 8.23.0
 description: The lightweight, distributed relational database built on SQLite
 type: application
 home: https://rqlite.io/
