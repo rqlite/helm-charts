@@ -56,7 +56,7 @@ values.
 
 ## Production Deployments
 
-The default chart values will deploy an unsecured single-node rqlite instace geared toward
+The default chart values will deploy an unsecured single-node rqlite instance geared toward
 low-friction testing, but it means that anyone with network access to the K8s Service or
 pods has free rein over the rqlite database.
 
@@ -78,7 +78,7 @@ upgraded in your environment.
 
 ## Read-only Nodes
 
-The chart supports deploying a separate resources for [readonly
+The chart supports deploying zero or more [readonly
 nodes](https://rqlite.io/docs/clustering/read-only-nodes/), where:
 
 * `readonly.replicaCount` specifies the number of read-only nodes for the rqlite cluster
@@ -90,9 +90,9 @@ nodes](https://rqlite.io/docs/clustering/read-only-nodes/), where:
       forwarded to the cluster's current leader node, defeating the purpose of a dedicated
       read-only pool
 * by default, readonly nodes inherit most of the same chart configuration values that
-  voting nodes use, but most configuration can be overriden specifically for readonly
+  voting nodes use, but most configuration can be overridden specifically for readonly
   nodes by specifying keys normally at the top-level within the `readonly` map
-    * all configuration that can be overriden within `readonly` is so indicated in
+    * all configuration that can be overridden within `readonly` is so indicated in
       [`values.yaml`](values.yaml)
 * unlike voting nodes, read-only nodes will automatically leave cluster when the pod
   gracefully terminates, making it possible to use Horizontal Pod Autoscaling for
