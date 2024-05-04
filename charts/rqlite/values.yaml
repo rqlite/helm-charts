@@ -573,6 +573,14 @@ config:
       # Normally backups are compressed prior to uploading. Set to true to disable
       # compression.
       noCompress: false
+      # If true, a timestamp will be prepended to the last element of storage.path above.
+      # This provides an alternative to enabling versioning on the bucket, which may be
+      # useful in cases where your object storage doesn't offer sufficient WORM semantics
+      # with bucket versioning alone.
+      #
+      # As with bucket versioning, you will likely want to configure a lifecycle policy on
+      # the bucket to age out old backups.
+      timestamp: false
     autoRestore:
       # Whether to enable automatic restoration on startup. This will only occur when the
       # PV has no existing data, and only by the elected rqlite leader.
