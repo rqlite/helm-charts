@@ -219,9 +219,6 @@ spec:
             - -join-interval=1s
             - -join-attempts=120
             - -raft-shutdown-stepdown
-            {{- with dig "nodeSelector" $.Values.nodeSelector $values }}
-              {{- tpl (toYaml .) $ | nindent 12 }}
-            {{- end }}
             {{- with $.Values.extraArgs }}
               {{- tpl (toYaml .) $ | nindent 12 }}
             {{- end }}
