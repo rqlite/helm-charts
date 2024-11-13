@@ -142,6 +142,8 @@ persistence:
   # Setting this to false will store data on an empheral volume, which will be lost when
   # the pod is cycled. Obviously this is only useful for testing or limited use cases.
   enabled: true
+  # Labels for the persistent volume claim
+  labels: {}
   # If null, the default storage class will be used
   storageClassName: null
   size: 10Gi
