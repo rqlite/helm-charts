@@ -312,6 +312,10 @@ spec:
       apiVersion: v1
       metadata:
         name: storage
+        {{- with $persistence.labels }}
+        labels:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       spec:
         {{- with $persistence.storageClassName }}
         storageClassName: {{ . }}
