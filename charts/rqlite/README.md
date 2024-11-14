@@ -260,7 +260,7 @@ config:
       region: us-east-1
       path: backups/mydatabase.sqlite.gz
       # Endpoint must be defined for any non-Amazon-native S3 storage
-      endpoint: s3.example.com
+      endpoint: https://s3.example.com
       # Most MinIO deployments use path-style requests, so unlike Amazon S3 (where this
       # is not recommended to be set), for MinIO we set it to true
       forcePathStyle: true
