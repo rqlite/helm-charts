@@ -3,7 +3,7 @@ entries:
   rqlite:
   - apiVersion: v2
     appVersion: 8.36.5
-    created: "2025-01-12T01:30:46.247474635Z"
+    created: "2025-01-12T01:30:46.247474636Z"
     description: The lightweight, distributed relational database built on SQLite
     digest: bac2e51b62eeed564ff25e492fc23117ae3b79a1b62a46c9013580f154d64e4e
     home: https://rqlite.io/
