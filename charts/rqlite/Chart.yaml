@@ -5,6 +5,15 @@ appVersion: 8.36.5
 description: The lightweight, distributed relational database built on SQLite
 type: application
 home: https://rqlite.io/
+keywords:
+  - rqlite
+  - sqlite
+  - sql
+  - database
+  - distributed
+annotations:
+  artifacthub.io/category: database
+  artifacthub.io/license: MIT
 sources:
   - https://github.com/rqlite/
   - https://github.com/rqlite/rqlite
