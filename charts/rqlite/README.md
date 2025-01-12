@@ -1,6 +1,6 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/rqlite/helm-charts/blob/master/LICENSE)
 [![Release Status](https://github.com/rqlite/helm-charts/workflows/Release%20Charts/badge.svg)](https://github.com/rqlite/helm-charts/actions)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/rqlite)](https://artifacthub.io/packages/search?repo=rqlite)
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/rqlite)](https://artifacthub.io/packages/helm/rqlite/rqlite)
 
 # rqlite Helm Chart
 
