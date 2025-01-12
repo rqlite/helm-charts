@@ -1,3 +1,5 @@
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/rqlite)](https://artifacthub.io/packages/search?repo=rqlite)
+
 # rqlite Helm Chart
 
 [rqlite](https://rqlite.io) is a lightweight, easy-to-use, distributed relational database
