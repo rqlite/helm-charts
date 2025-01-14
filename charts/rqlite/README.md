@@ -1,6 +1,8 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/rqlite/helm-charts/blob/master/LICENSE)
-[![Release Status](https://github.com/rqlite/helm-charts/workflows/Release%20Charts/badge.svg)](https://github.com/rqlite/helm-charts/actions)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/rqlite)](https://artifacthub.io/packages/helm/rqlite/rqlite)
+[![Release
+Status](https://github.com/rqlite/helm-charts/workflows/Release%20Charts/badge.svg)](https://github.com/rqlite/helm-charts/actions)
+[![Artifact
+Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/rqlite)](https://artifacthub.io/packages/helm/rqlite/rqlite)
 
 # rqlite Helm Chart
 
@@ -8,7 +10,8 @@
 built on SQLite.
 
 Experienced Helm user?  Let's cut to the chase: the chart's default
-[`values.yaml`](values.yaml) is what you want.
+[`values.yaml`](https://github.com/rqlite/helm-charts/blob/master/charts/rqlite/values.yaml)
+is what you want.
 
 
 ## Quick Start
@@ -53,9 +56,10 @@ helm upgrade -i -n db --create-namespace rqlite rqlite/rqlite -f values.yaml
 
 Refer to [Helm's documentation](https://helm.sh/docs/) for more usage details for Helm itself.
 
-Finally, read through the chart's default [`values.yaml`](values.yaml), which is well
-commented and currently acts as the authoritative source of the chart's configuration
-values.
+Finally, read through the chart's default
+[`values.yaml`](https://github.com/rqlite/helm-charts/blob/master/charts/rqlite/values.yaml),
+which is well commented and currently acts as the authoritative source of the chart's
+configuration values.
 
 
 ## Production Deployments
@@ -97,7 +101,7 @@ nodes](https://rqlite.io/docs/clustering/read-only-nodes/), where:
   voting nodes use, but most configuration can be overridden specifically for readonly
   nodes by specifying keys normally at the top-level within the `readonly` map
     * all configuration that can be overridden within `readonly` is so indicated in
-      [`values.yaml`](values.yaml)
+      [`values.yaml`](https://github.com/rqlite/helm-charts/blob/master/charts/rqlite/values.yaml)
 * unlike voting nodes, read-only nodes will automatically leave cluster when the pod
   gracefully terminates, making it possible to use Horizontal Pod Autoscaling for
   demand-based scaling for readonly workloads
