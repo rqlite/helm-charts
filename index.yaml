@@ -5,6 +5,32 @@ entries:
       artifacthub.io/category: database
       artifacthub.io/license: MIT
     apiVersion: v2
+    appVersion: 8.38.2
+    created: "2025-06-27T22:23:44.81026742Z"
+    description: The lightweight, distributed relational database built on SQLite
+    digest: 1c83bb81299409fbee0281b4cfb23fab671ae386d3cb451996c24b6b9992a744
+    home: https://rqlite.io/
+    keywords:
+    - rqlite
+    - sqlite
+    - sql
+    - database
+    - distributed
+    maintainers:
+    - name: jtackaberry
+    name: rqlite
+    sources:
+    - https://github.com/rqlite/
+    - https://github.com/rqlite/rqlite
+    - https://github.com/rqlite/helm-charts
+    type: application
+    urls:
+    - https://github.com/rqlite/helm-charts/releases/download/rqlite-1.15.2/rqlite-1.15.2.tgz
+    version: 1.15.2
+  - annotations:
+      artifacthub.io/category: database
+      artifacthub.io/license: MIT
+    apiVersion: v2
     appVersion: 8.36.11
     created: "2025-02-20T00:32:41.265509152Z"
     description: The lightweight, distributed relational database built on SQLite
@@ -467,4 +493,4 @@ entries:
     urls:
     - https://github.com/rqlite/helm-charts/releases/download/rqlite-0.1.0/rqlite-0.1.0.tgz
     version: 0.1.0
-generated: "2025-02-20T00:32:41.265767283Z"
+generated: "2025-06-27T22:23:44.810504793Z"
