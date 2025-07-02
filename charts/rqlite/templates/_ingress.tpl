@@ -34,6 +34,9 @@ metadata:
     {{- end }}
   {{- end }}
 spec:
+{{- with dig "ingress" "ingressClassName" false $values }}
+  ingressClassName: {{ . | quote }}
+{{- end }}
 {{- with dig "ingress" "tls" false $values }}
   tls:
   {{- range . }}
