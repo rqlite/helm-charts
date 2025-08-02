@@ -82,7 +82,7 @@ spec:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
 
-      {{- with dig "pullSecrets" $.Values.pullSecrets $values }}
+      {{- with dig "pullSecrets" $.Values.image.pullSecrets $values }}
       imagePullSecrets:
         {{- tpl (toYaml .) $ | nindent 8 }}
       {{- end }}
