@@ -215,6 +215,9 @@ spec:
             {{- if dig "backup" "autoRestore" "enabled" false $config }}
             - -auto-restore=/config/sensitive/restore.json
             {{- end }}
+            {{- if dig "cdc" "enabled" false $config }}
+            - -cdc-config=/config/sensitive/cdc.json
+            {{- end }}
             {{- end }}
             - -join-interval=1s
             - -join-attempts=120
