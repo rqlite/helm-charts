@@ -599,8 +599,7 @@ config:
   #
   # See also https://rqlite.io/docs/guides/cdc/
   #
-  # CDC can only be enabled on voting nodes. It will be automatically disabled for
-  # read-only nodes regardless of the configuration.
+  # CDC can only be enabled on voting nodes.
   #
   # Note: CDC requires rqlite v9.0.0 or later.
   cdc:
