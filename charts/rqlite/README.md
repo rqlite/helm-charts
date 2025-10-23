@@ -289,8 +289,8 @@ allows streaming change events to an HTTP endpoint whenever data is modified in 
 database. This feature is useful for building event-driven architectures, maintaining
 search indexes, or triggering downstream processing.
 
-The Helm chart exposes CDC configuration under the `config.cdc` dict. CDC can only be
-enabled on voting nodes and requires rqlite v9.0.0 or later.
+The Helm chart exposes CDC configuration under the `config.cdc` dict. CDC requires rqlite
+v9.0.0 or later, and is not supported on read-only nodes.
 
 ### Basic CDC Configuration
 
