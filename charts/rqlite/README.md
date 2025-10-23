@@ -290,7 +290,7 @@ database. This feature is useful for building event-driven architectures, mainta
 search indexes, or triggering downstream processing.
 
 The Helm chart exposes CDC configuration under the `config.cdc` dict. CDC can only be
-enabled on voting nodes and requires rqlite v8.0.0 or later.
+enabled on voting nodes and requires rqlite v9.0.0 or later.
 
 ### Basic CDC Configuration
 
