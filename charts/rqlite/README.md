@@ -282,6 +282,63 @@ config:
       enabled: true
 ```
 
+## Change Data Capture (CDC)
+
+rqlite supports [Change Data Capture (CDC)](https://rqlite.io/docs/guides/cdc/), which
+allows streaming change events to an HTTP endpoint whenever data is modified in the
+database. This feature is useful for building event-driven architectures, maintaining
+search indexes, or triggering downstream processing.
+
+The Helm chart exposes CDC configuration under the `config.cdc` dict. CDC can only be
+enabled on voting nodes and requires rqlite v8.0.0 or later.
+
+### Basic CDC Configuration
+
+The simplest CDC configuration requires just enabling it and specifying an endpoint:
+
+```yaml
+config:
+  cdc:
+    enabled: true
+    endpoint: "https://cdc-consumer.example.com/events"
+```
+
+### Advanced CDC Configuration
+
+For more control over CDC behavior, you can configure batching, filtering, retry policies,
+and TLS:
+
+```yaml
+config:
+  cdc:
+    enabled: true
+    endpoint: "https://cdc-consumer.example.com/events"
+    # Optional service ID to differentiate events from multiple clusters
+    serviceId: "production-cluster"
+    # Filter to only capture changes to specific tables
+    tableFilter: "^(users|orders|payments)$"
+    # Send only row IDs instead of full row data
+    rowIdsOnly: false
+    # Batching configuration
+    maxBatchSize: 20
+    maxBatchDelay: "500ms"
+    # Transmission configuration
+    transmitTimeout: "10s"
+    transmitMaxRetries: 5
+    transmitRetryPolicy: "exponential"
+    transmitMinBackoff: "2s"
+    transmitMaxBackoff: "60s"
+    # TLS configuration for the CDC endpoint
+    tls:
+      insecureSkipVerify: false
+      serverName: "cdc-consumer.example.com"
+```
+
+See the chart's
+[`values.yaml`](https://github.com/rqlite/helm-charts/blob/master/charts/rqlite/values.yaml)
+for detailed documentation of all CDC configuration options.
+
+
 ## Versioning
 
 Helm charts use semantic versioning, and rqlite's chart offers the following guarantees:
