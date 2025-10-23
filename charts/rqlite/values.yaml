@@ -593,3 +593,59 @@ config:
       # the pod will be restarted. Set this to true if you want rqlite to continue startup
       # despite a download failure.
       continueOnFailure: false
+
+  # This section configures rqlite's Change Data Capture (CDC) functionality, which allows
+  # streaming change events to an HTTP endpoint.
+  #
+  # See also https://rqlite.io/docs/guides/cdc/
+  #
+  # CDC can only be enabled on voting nodes.
+  #
+  # Note: CDC requires rqlite v9.0.0 or later.
+  cdc:
+    # If true, CDC will be enabled. When enabled, the 'endpoint' field must be set.
+    enabled: false
+    # The HTTP endpoint to which CDC events are sent. This is required when CDC is enabled.
+    # Can be an HTTP or HTTPS URL, e.g. "https://cdc-consumer.example.com/events"
+    endpoint: ""
+    # Optional service ID to differentiate events from multiple rqlite clusters.
+    # If set, this value will be included in each CDC event.
+    serviceId: ""
+    # If true, only row IDs will be sent in CDC events, not the full row data.
+    rowIdsOnly: false
+    # Optional regular expression to filter which tables changes are captured for.
+    # If not specified, changes to all tables are captured.
+    # Example: "^(users|orders)$" would only capture changes to users and orders tables.
+    tableFilter: ""
+    # TLS configuration for connecting to the CDC endpoint.
+    tls:
+      # Path to CA certificate file for TLS verification (mounted via extraFiles).
+      caCertFile: ""
+      # Path to client certificate file for mutual TLS (mounted via extraFiles).
+      certFile: ""
+      # Path to client private key file for mutual TLS (mounted via extraFiles).
+      keyFile: ""
+      # If true, TLS certificate verification will be skipped. Not recommended for production.
+      insecureSkipVerify: false
+      # Server name to verify in the certificate. If empty, the hostname from the endpoint is used.
+      serverName: ""
+    # Maximum number of events to send in a single request to the endpoint.
+    maxBatchSize: 10
+    # Maximum delay before sending a batch to the endpoint, regardless of batch size.
+    # This is a duration string (e.g., "200ms", "1s", "5m").
+    maxBatchDelay: "200ms"
+    # Interval at which the high watermark is broadcast by the leader.
+    # This is a duration string (e.g., "1s", "5s").
+    highWatermarkInterval: "1s"
+    # Timeout for transmitting events to the endpoint.
+    # This is a duration string (e.g., "5s", "30s").
+    transmitTimeout: "5s"
+    # Maximum number of retries for sending events. If null, events will be retried forever.
+    transmitMaxRetries: null
+    # Retry policy: "linear" or "exponential". Linear uses constant backoff, exponential
+    # increases the delay exponentially with each retry.
+    transmitRetryPolicy: "linear"
+    # Initial backoff time for retries. This is a duration string (e.g., "1s", "5s").
+    transmitMinBackoff: "1s"
+    # Maximum backoff time for exponential retry policy. This is a duration string (e.g., "30s", "5m").
+    transmitMaxBackoff: "30s"
