@@ -593,3 +593,57 @@ config:
       # the pod will be restarted. Set this to true if you want rqlite to continue startup
       # despite a download failure.
       continueOnFailure: false
+
+  # This section configures rqlite's Change Data Capture (CDC) functionality, which streams
+  # database change events to an HTTP endpoint.
+  #
+  # See also https://rqlite.io/docs/guides/cdc/
+  #
+  # CDC is only enabled for voter nodes. Read-only nodes never become leader and don't
+  # process writes, so CDC is not applicable.
+  cdc:
+    # If true, CDC will be enabled.
+    enabled: false
+    # The HTTP(S) endpoint that rqlite will stream change events to.
+    # Required when enabled is true.
+    endpoint: ""
+    # An optional identifier for this rqlite instance, included in CDC events.
+    serviceId: null
+    # If true, only row IDs are included in change events, not the full row data.
+    rowIdsOnly: false
+    # An optional list of table names to limit CDC events to. If null or empty,
+    # changes to all tables are captured.
+    tableFilter: null
+    # TLS configuration for the CDC endpoint connection.
+    tls:
+      # PEM-formatted CA certificate(s) used to validate the CDC endpoint's TLS
+      # certificate. If not defined, the system's default trust store is used.
+      ca: ""
+      # PEM-formatted client certificate for mutual TLS with the CDC endpoint.
+      cert: ""
+      # PEM-formatted client private key for mutual TLS with the CDC endpoint.
+      key: ""
+      # Name of a pre-existing Kubernetes Secret containing TLS certificates for the
+      # CDC endpoint. The Secret should contain ca.crt, tls.crt, and tls.key as needed.
+      # When defined, this takes precedence over the inline ca/cert/key values above.
+      secretName: null
+      # If true, skip verification of the CDC endpoint's TLS certificate.
+      insecureSkipVerify: false
+      # Override the server name used for TLS certificate verification.
+      serverName: null
+    # Maximum number of change events to include in a single batch.
+    maxBatchSize: null
+    # Maximum time to wait before sending a partial batch (duration string, e.g. "1s").
+    maxBatchDelay: null
+    # How frequently to persist the high-water mark (duration string).
+    highWatermarkInterval: null
+    # Timeout for transmitting a batch to the endpoint (duration string).
+    transmitTimeout: null
+    # Maximum number of retries when transmitting a batch fails.
+    transmitMaxRetries: null
+    # Retry policy for failed transmissions (e.g. "exponential").
+    transmitRetryPolicy: null
+    # Minimum backoff duration between retries (duration string).
+    transmitMinBackoff: null
+    # Maximum backoff duration between retries (duration string).
+    transmitMaxBackoff: null
