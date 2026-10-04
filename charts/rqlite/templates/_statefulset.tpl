@@ -123,6 +123,12 @@ spec:
             secretName: {{ $config.tls.client.caSecretName }}
             defaultMode: 288 # 0400
       {{- end }}
+      {{- if and (dig "cdc" "enabled" false $config) (dig "cdc" "tls" "secretName" nil $config) }}
+        - name: cdc-tls
+          secret:
+            secretName: {{ $config.cdc.tls.secretName }}
+            defaultMode: 288 # 0400
+      {{- end }}
       {{- if not (dig "persistence" "enabled" $.Values.persistence.enabled $values) }}
         - name: storage
           emptyDir: {}
@@ -215,6 +221,9 @@ spec:
             {{- if dig "backup" "autoRestore" "enabled" false $config }}
             - -auto-restore=/config/sensitive/restore.json
             {{- end }}
+            {{- if dig "cdc" "enabled" false $config }}
+            - -cdc-config=/config/sensitive/cdc.json
+            {{- end }}
             {{- end }}
             - -join-interval=1s
             - -join-attempts=120
@@ -304,6 +313,10 @@ spec:
             {{- if $config.tls.client.caSecretName }}
             - name: client-tls-ca
               mountPath: /config/client-tls-ca
+            {{- end }}
+            {{- if and (dig "cdc" "enabled" false $config) (dig "cdc" "tls" "secretName" nil $config) }}
+            - name: cdc-tls
+              mountPath: /config/cdc-tls
             {{- end }}
   {{- $persistence := dig "persistence" $.Values.persistence $values }}
   {{- if $persistence.enabled }}
